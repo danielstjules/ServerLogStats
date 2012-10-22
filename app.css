@@ -1,0 +1,124 @@
+    body {
+        background-color: #2e3031;
+        color: #ddd;
+        font-family: 'PT Sans', sans-serif;
+        font-size: 12px;
+        padding: 0;
+        margin: 0 0 20px 0;
+    }
+    a, a:link, a:visited, a:active, a:hover {
+        color: #579ccc;
+        text-decoration: none;
+    }
+    #header {
+        background: #ddd;
+    }
+    #headercontainer {
+        width: 800px;
+        margin: 0 auto;
+        height: 100px;
+    }
+    #headercontainer span {
+        color: #777;
+        padding: 26px 20px;
+        margin: 0;
+    }
+    h1 {
+        text-align: center;
+        float: left;
+        width: 100px;
+        margin: 0 auto;
+        font-family: 'Verdana', sans-serif;
+        font-size: 20px;
+        font-weight: normal;
+        color: #a0a0a0;
+        margin: 20px;
+    }
+    h1:first-line {
+        font-size: 24px;
+        font-weight: bold;
+        color: #579ccc;
+    }
+    #content {
+        width: 800px;
+        margin: 0 auto;
+    }
+    #uploadbox {
+        background-color: #444444;
+        padding: 20px;
+        border: 1px #595959 solid;
+        margin: 20px 0 20px 0;
+    }
+    span{
+        display: block;
+        padding: 0 20px 0 20px;
+        margin: 0 1px 0 1px;
+    }
+    #traffic,
+    #hosts,
+    #requests,
+    #pages,
+    #ref,
+    #refdomains,
+    #errors,
+    #largestrequests {
+        height: 240px;
+        display: none;
+        background-color: #444444;
+        padding: 20px;
+        border: 1px #595959 solid;
+        margin: 20px 0 20px 0;
+    }
+    .container {
+        float: right;
+    }
+    .table {
+        margin-top: 12px;
+        height: 214px;
+        width: 360px;
+        overflow: auto;
+    }
+    table {
+        width: 340px;
+        table-layout: fixed;
+    }
+    th {
+        text-align: left;
+    }
+    .rank {
+        width: 30px;
+    }
+    .colne {
+        width: 270px;
+    }
+    .coltwo {
+        width: 40px;
+    }
+    tr:hover {
+        background: #343434;
+    }
+    td {
+        word-wrap: break-word;
+    }
+    #uploadbox {
+        font-size: 14px;
+    }
+    input {
+        display: none;
+        margin-top: 20px;
+    }
+    .barChart {
+        font: 10px sans-serif;
+        shape-rendering: crispEdges;
+        margin-left: -6px;
+    }
+    .barChart rect {
+        stroke: #2e3031;
+        fill: #579ccc;
+    }
+    .barChart text.bar, .barChart text.rule {
+        fill: white;
+    }
+    .barChart rect:hover {
+        fill: #397eae;
+    }

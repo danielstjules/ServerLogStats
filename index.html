@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<head>
+    <title>ServerLogStats.com</title>
+    <meta name="description" content="Visualize web server logs">
+    <script type="text/javascript" src="http://d3js.org/d3.v2.min.js"></script>
+    <link href="http://fonts.googleapis.com/css?family=PT+Sans:400,700" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,800" rel="stylesheet" type="text/css">
+    <link href="app.css" rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<div id="header">
+    <div id="headercontainer">
+        <h1>Server LogStats</h1>
+        <span>
+            Generate apache/nginx log statistics and graphs right in your browser!
+            Your logs and visitor information never hit our servers thanks to HTML5, 
+            which is important, cause we all care about privacy. Want to help improve 
+            this app? Fork it on <a href="https://github.com/danielstjules/ServerLogStats">Github</a> 
+            or <a href="https://github.com/danielstjules/ServerLogStats/issues">open an issue</a>.
+        </span>
+    </div>
+</div>
+
+<div id="content">
+    <div id="uploadbox">
+        <strong>
+            Drag and drop your log here to render statistics, or <a id="showfileinput" href="#">click here</a> 
+            to browse your computer for the file. <input type="file" id="fileinput" name="fileinput" />
+        </strong>
+    </div>
+    <div id="traffic">
+        <strong>Traffic &amp; Bandwidth per Day</strong>
+    </div>
+    <div id="hosts">
+        <div class="container">
+            <strong>Top 100 Hosts</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 Hosts</strong>
+    </div>
+    <div id="requests">
+        <div class="container">
+            <strong>Top 100 Requests</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 Requests</strong>
+    </div>
+    <div id="pages">
+        <div class="container">
+            <strong>Top 100 Pages</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 Pages</strong>
+    </div>
+    <div id="ref">
+        <div class="container">
+            <strong>Top 100 Referrers</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 Referrers</strong>
+    </div>
+    <div id="refdomains">
+        <div class="container">
+            <strong>Top 100 External Referring Domains</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 External Referring Domains</strong>
+    </div>
+    <div id="errors">
+        <div class="container">
+            <strong>Top 100 404s</strong>
+            <div class="table"></div>
+        </div>
+        <strong>Top 10 404s</strong>
+    </div>
+    <span>
+        <p>Maximum recommended log upload size: 200MB</p>
+        <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
+    </span>
+</div>
+
+<script type="text/javascript" src="app.js"></script>
+
+</body>
+</html>
