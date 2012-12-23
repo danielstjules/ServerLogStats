@@ -283,6 +283,8 @@ function buildPageTable(n) {
         }
     }
 
+    delete pageHash[''];
+
     pageTable = getTopNFromHash(pageHash,n);
 }
 
@@ -519,14 +521,24 @@ function drawBarChart(container, data) {
             .attr('text-anchor', 'middle')
             .text(String);
 
+    // Draw rectangles, forcing a bar to display 
+    // even if it would barely be visible
     barChart.selectAll('rect')
         .data(data)
         .enter()
         .append('rect')
             .attr('y', y)
-            .attr('width', x)
+            .attr('width', 
+                function(d) {
+                    if (x(d) > 3)
+                        return x(d);
+                    else
+                        return 3;
+                })
             .attr('height', y.rangeBand());
 
+    // Draw hits within bars, but don't display 
+    // hits if the bar is too short
     barChart.selectAll('.bar')
         .data(data)
         .enter()
@@ -535,9 +547,15 @@ function drawBarChart(container, data) {
             .attr('x', x)
             .attr('y', 
                 function(d) { 
-                    return y(d) + y.rangeBand() / 2;
+                    return y(d) + y.rangeBand() / 2 + 1;
                 })
-            .attr('dx', -3)
+            .attr('dx',
+                function(d) {
+                    if (x(d) > 30)
+                        return -3;
+                    else
+                        return -200;
+                })
             .attr('dy', '.38em')
             .attr('text-anchor', 'end')
             .text(String);
