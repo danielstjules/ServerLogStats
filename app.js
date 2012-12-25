@@ -5,20 +5,22 @@
 
 // Store complete log information globally for later access
 var logTable = [];
+
 // Current tables, based on selected section of the log
-var hostTable = [];
-var requestTable = [];
-var pageTable = [];
-var refTable = [];
-var trafficTable = [];
-var errorTable = [];
+// Will be useful for later features
+var hostTable       = [];
+var requestTable    = [];
+var pageTable       = [];
+var refTable        = [];
+var trafficTable    = [];
+var errorTable      = [];
 var refDomainsTable = [];
 
 /**
  * Display file input for those who don't want to use drag and drop
  */
 function showFileInput() {
-    document.getElementById('fileinput').style.display = "block";
+    document.getElementById('fileinput').style.display = 'block';
 }
 
 /**
@@ -27,7 +29,7 @@ function showFileInput() {
  * system's copy action, which usually changes the cursor to indicate 
  * that it's a copy.
  *
- * @param  evt The dragover event that triggered the event listener
+ * @param  evt  The drag over event that triggered the event listener
  */
 function handleDragOver(evt) {
     evt.stopPropagation(); // Stop further propogation in DOM
@@ -41,7 +43,7 @@ function handleDragOver(evt) {
  * the log table. It then calls the functions necessary to 
  * rank the data and add the charts and tables to the page.
  *
- * @param  evt The drop event that triggered the event listener
+ * @param  evt  The drop event that triggered the event listener
  */
 function handleFileSelect(evt) {
     evt.stopPropagation();
@@ -72,11 +74,11 @@ function handleFileSelect(evt) {
         if (evt.target.readyState == FileReader.DONE) { // Check the ready state
 
             // Only read if log file looks valid, otherwise return and refresh
-            if(!isValidLogInput(evt.target.result.slice(0, 1000))) {
+            if (!isValidLogInput(evt.target.result.slice(0, 1000))) {
                 document.getElementById('uploadbox').innerHTML += 
                     '<br /><br /><strong>Error: </strong>File input not a valid log. This page will ' +
                     'refresh automatically in 5 seconds. Please try again.';
-                setTimeout("location.reload(true);",5000);
+                setTimeout('location.reload(true);',5000);
                 return;
             }
 
@@ -84,15 +86,14 @@ function handleFileSelect(evt) {
             populateLogTable(evt.target.result.split(/[\r\n|\n]+/));
 
             var n = 100;
-            buildHostTable(n);
-            buildRequestTable(n);
-            buildPageTable(n);
-            buildRefTable(n);
-            buildErrorTable(n);
-            buildTrafficTable();
-            buildRequestTable(n);
-            // Grab N+1 because we assume the top entry is their domain
-            buildRefDomainsTable(n+1)
+            hostTable       = buildHostTable(n);
+            requestTable    = buildRequestTable(n);
+            pageTable       = buildPageTable(n);
+            refTable        = buildRefTable(n);
+            errorTable      = buildErrorTable(n);
+            trafficTable    = buildTrafficTable();
+            requestTable    = buildRequestTable(n);
+            refDomainsTable = buildRefDomainsTable(n);
 
             setupPage();
         }
@@ -108,8 +109,8 @@ function handleFileSelect(evt) {
  * try to process the whole log with regex for validation 
  * as it would take far too long running in a browser.
  *
- * @param logSegment Sample of the log file
- * @return boolean True if its valid, false otherwise
+ * @param   logSegment  Sample of the log file
+ * @return  boolean     True if its valid, false otherwise
  */
 function isValidLogInput(logSegment) {
     // We check the second in case the first one got 
@@ -126,64 +127,71 @@ function isValidLogInput(logSegment) {
 }
 
 /**
- * Builds the logTable array of hashes. We then extract the host, date,
- * request, status, bytes transferred, and referrer. 
+ * Builds the logTable array of "associative" arrays. We then extract the host, 
+ * date, request, status, bytes transferred, and referrer. 
  *
- * @param tempFileData  An array of strings containing the lines of the log
+ * @param  tempFileData  An array of strings containing the lines of the log
  */
 function populateLogTable(tempFileData) {
     var startPos = 0, 
         endPos   = 0;
 
-    for(var i = 0; i < tempFileData.length; i++) {
+    for (var i = 0; i < tempFileData.length; i++) {
         // RegEx was too slow, so we're losing simplicity in favour of performance
         // Table with: Host, date, requests, http status, bytes transferred, and ref
         logTable[i] = {};
 
         // Match Host
-        endPos = tempFileData[i].indexOf(" -");
+        endPos = tempFileData[i].indexOf(' -');
         logTable[i]['host'] = tempFileData[i].substring(0,endPos);
 
         // Match date with format: dd/MMM/y
-        startPos = tempFileData[i].indexOf("[", endPos) + 1;
-        endPos = tempFileData[i].indexOf(" ", startPos);
+        startPos = tempFileData[i].indexOf('[', endPos) + 1;
+        endPos = tempFileData[i].indexOf(' ', startPos);
         logTable[i]['date'] = tempFileData[i].substring(startPos,endPos-9);
         
         // Match requests
-        startPos = tempFileData[i].indexOf("/", endPos);
-        endPos = tempFileData[i].indexOf(" ", startPos);
+        startPos = tempFileData[i].indexOf('/', endPos);
+        endPos = tempFileData[i].indexOf(' ', startPos);
         logTable[i]['requests'] = tempFileData[i].substring(startPos,endPos);
 
         // Match http status
-        startPos = tempFileData[i].indexOf("\" ", endPos) + 2;
+        startPos = tempFileData[i].indexOf('" ', endPos) + 2;
         endPos = startPos + 3;
         logTable[i]['status'] = tempFileData[i].substring(startPos,endPos);
 
         // Match bytes
         startPos = endPos + 1;
-        endPos = tempFileData[i].indexOf(" ", startPos);
+        endPos = tempFileData[i].indexOf(' ', startPos);
         logTable[i]['bytes'] = tempFileData[i].substring(startPos,endPos);
 
         // Match ref
-        startPos = tempFileData[i].indexOf("\"", endPos) + 1;
+        startPos = tempFileData[i].indexOf('"', endPos) + 1;
         endPos = tempFileData[i].indexOf('"', startPos);
         logTable[i]['ref'] = tempFileData[i].substring(startPos,endPos);
+
+        // Match user_agent info
+        startPos = tempFileData[i].indexOf('"', endPos + 1) + 1;
+        endPos = tempFileData[i].indexOf('"', startPos);
+        logTable[i]['userAgent'] = tempFileData[i].substring(startPos,endPos);
     } 
 }
 
 /**
  * Builds a two dimensional array containing the number of hits 
  * and total bandwidth transferred in MB per day
+ *
+ * @return  array  Contains the hit count and bandwidth for each day
  */
 function buildTrafficTable() {
     var trafficHash = {};
     var megaByte = 1024 * 1024;
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
         var date = Date.parse(logTable[i]['date'])
         if (isNaN(date) == false) {
             // Increment traffic
-            if (typeof trafficHash[logTable[i]['date']] === "undefined") {
+            if (typeof trafficHash[logTable[i]['date']] === 'undefined') {
                 trafficHash[logTable[i]['date']] = [date, 1, parseInt(logTable[i]['bytes'])];
             } else {
                 trafficHash[logTable[i]['date']][1]++;
@@ -192,12 +200,13 @@ function buildTrafficTable() {
         }
     }
 
+    var outputTable = [];
     for (var key in trafficHash) {
-        trafficTable.push([trafficHash[key][0],key, trafficHash[key][1], 
+        outputTable.push([trafficHash[key][0],key, trafficHash[key][1], 
             (trafficHash[key][2] / megaByte).toFixed(2)]);
     }
 
-    trafficTable.sort();
+    return outputTable.sort();
 }
 
 /**
@@ -205,43 +214,52 @@ function buildTrafficTable() {
  * its number of requests. The table is N in size and is in 
  * descending order.
  *
- * @param n  Number of top rows to include
+ * @param  n  Number of top rows to include
  */
 function buildHostTable(n) {
     var hostHash = {};
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
         // Increment host frequency
-        if (typeof hostHash[logTable[i]['host']] === "undefined") {
+        if (typeof hostHash[logTable[i]['host']] === 'undefined') {
             hostHash[logTable[i]['host']] = 1;
         } else {
             hostHash[logTable[i]['host']]++;
         }
     }
 
-    hostTable = getTopNFromHash(hostHash,n);
+    return getTopNFromHash(hostHash,n);
 }
 
 /**
- * Builds the requestTable, in which each row corresponds to a request url 
+ * Builds a requests table, in which each row corresponds to a request url 
  * and the number of occurences. The table is N in size and is in 
- * descending order.
+ * descending order. If the host is given, then only matches those requests
+ * made by that host.
  *
- * @param n  Number of top rows to include
+ * @param   n      Number of top rows to include
+ * @param   host   Host to filter requests by
+ * @return  array  The request table
  */
-function buildRequestTable(n) {
+function buildRequestTable(n, host) {
     var requestsHash = {};
+    var match = true;
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
+
+        // filter out requests that don't match our host, if given
+        if (typeof host !== 'undefined' && logTable[i]['host'] != host)
+            continue;
+            
         // Increment requests frequency
-        if (typeof requestsHash[logTable[i]['requests']] === "undefined") {
+        if (typeof requestsHash[logTable[i]['requests']] === 'undefined') {
             requestsHash[logTable[i]['requests']] = 1;
         } else {
             requestsHash[logTable[i]['requests']]++;
         }
     }
 
-    requestTable = getTopNFromHash(requestsHash,n);
+    return getTopNFromHash(requestsHash,n);
 }
 
 /**
@@ -249,21 +267,25 @@ function buildRequestTable(n) {
  * its number of requests. Each request is checked against a 
  * list of common media extensions to ensure that it's indeed 
  * a page. The table is N in size and is in descending order.
+ * If the host is given, then only matches those pages requested 
+ * by that host.
  *
- * @param n  Number of top rows to include
+ * @param   n      Number of top rows to include
+ * @param   host   Host to filter pages by
+ * @return  array  The pages table
  */
-function buildPageTable(n) {
+function buildPageTable(n, host) {
     // Helper for ignoring common media file extensions
     function isNotMedia(url) {
         extensions = [
             'jpg', 'jpeg', 'pdf', 'mp3', 'rar',
-            'exe', 'wmv', 'doc', 'avi', 'ppt',
+            'exe', 'wmv',  'doc', 'avi', 'ppt',
             'mpg', 'mpeg', 'tif', 'wav', 'psd',
-            'txt', 'bmp', 'css', 'js', 'png',
-            'gif', 'swf', 'dmg', 'flv', 'gz'
+            'txt', 'bmp',  'css', 'js',  'png',
+            'gif', 'swf',  'dmg', 'flv', 'gz'
         ];
         for (var i = 0; i < extensions.length; i++) {
-            if (url.indexOf("." + extensions[i]) != -1) {
+            if (url.indexOf('.' + extensions[i]) != -1) {
                 return false;
             }  
         }
@@ -272,10 +294,14 @@ function buildPageTable(n) {
 
     var pageHash = {};
     
-    for(var i = 0; i < logTable.length; i++) {
-        if(isNotMedia(logTable[i]['requests'])) {
+    for (var i = 0; i < logTable.length; i++) {
+        // filter out requests that don't match our host, if given
+        if (typeof host !== 'undefined' && logTable[i]['host'] != host)
+            continue;
+
+        if (isNotMedia(logTable[i]['requests'])) {
             // Increment requests frequency
-            if (typeof pageHash[logTable[i]['requests']] === "undefined") {
+            if (typeof pageHash[logTable[i]['requests']] === 'undefined') {
                 pageHash[logTable[i]['requests']] = 1;
             } else {
                 pageHash[logTable[i]['requests']]++;
@@ -285,7 +311,7 @@ function buildPageTable(n) {
 
     delete pageHash[''];
 
-    pageTable = getTopNFromHash(pageHash,n);
+    return getTopNFromHash(pageHash,n);
 }
 
 
@@ -294,14 +320,14 @@ function buildPageTable(n) {
  * its number of requests. The table is N in size and is in 
  * descending order. We remove blank referrers from the results.
  *
- * @param n  Number of top rows to include
+ * @param  n  Number of top rows to include
  */
 function buildRefTable(n) {
     var refHash = {};
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
         // Increment ref frequency
-        if (typeof refHash[logTable[i]['ref']] === "undefined") {
+        if (typeof refHash[logTable[i]['ref']] === 'undefined') {
             refHash[logTable[i]['ref']] = 1;
         } else {
             refHash[logTable[i]['ref']]++;
@@ -311,7 +337,7 @@ function buildRefTable(n) {
     delete refHash['-'];
     delete refHash[''];
 
-    refTable = getTopNFromHash(refHash,n);
+    return getTopNFromHash(refHash,n);
 }
 
 /**
@@ -319,15 +345,15 @@ function buildRefTable(n) {
  * its number of requests. The table is N in size and is in 
  * descending order.
  *
- * @param n  Number of top rows to include
+ * @param  n  Number of top rows to include
  */
 function buildErrorTable(n) {
     var errorHash = {};
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
         // Increment error frequency
         if (logTable[i]['status'] ==  '404') {
-            if (typeof errorHash[logTable[i]['requests']] === "undefined") {
+            if (typeof errorHash[logTable[i]['requests']] === 'undefined') {
                 errorHash[logTable[i]['requests']] = 1;
             } else {
                 errorHash[logTable[i]['requests']]++;
@@ -335,7 +361,7 @@ function buildErrorTable(n) {
         }
     }
 
-    errorTable = getTopNFromHash(errorHash,n);
+    return getTopNFromHash(errorHash,n);
 }
 
 /**
@@ -344,20 +370,20 @@ function buildErrorTable(n) {
  * is N in size and is in descending order. We drop the top result 
  * as we assume its the log owner's domain.
  *
- * @param n  Number of top rows to include
+ * @param  n  Number of top rows to include
  */
 function buildRefDomainsTable(n) {
     var refDomainsHash = {};
     
-    for(var i = 0; i < logTable.length; i++) {
+    for (var i = 0; i < logTable.length; i++) {
         // Increment ref domain frequency
         var refDomain = logTable[i]['ref'];
-        refDomain = refDomain.replace("http://","");
-        refDomain = refDomain.replace("https://","");
-        refDomain = refDomain.replace("www.","");
+        refDomain = refDomain.replace('http://','');
+        refDomain = refDomain.replace('https://','');
+        refDomain = refDomain.replace('www.','');
         var endPos = refDomain.indexOf('/');
         var refDomain = refDomain.substring(0,endPos).toLowerCase();
-        if (typeof refDomainsHash[refDomain] === "undefined") {
+        if (typeof refDomainsHash[refDomain] === 'undefined') {
             refDomainsHash[refDomain] = 1;
         } else {
             refDomainsHash[refDomain]++;
@@ -367,9 +393,11 @@ function buildRefDomainsTable(n) {
     delete refDomainsHash['-'];
     delete refDomainsHash[''];
 
-    refDomainsTable = getTopNFromHash(refDomainsHash,n);
     // Assume top result is your domain, and we only want external
-    refDomainsTable.shift();
+    var outputTable = getTopNFromHash(refDomainsHash,n+1);
+    outputTable.shift();
+
+    return outputTable;
 }
 
 /**
@@ -377,8 +405,8 @@ function buildRefDomainsTable(n) {
  * sorts it by its value. It then trims the results to be 
  * less than or equal to n in size.
  *
- * @param hash  The hash to manipulate
- * @param n     Number of top rows to include
+ * @param  array  The hash to manipulate
+ * @param  n      Number of top rows to include
  */
 function getTopNFromHash(hash, n) {
     // Assign top N from Hash to array
@@ -400,14 +428,14 @@ function getTopNFromHash(hash, n) {
 /**
  * Returns the first 10 elements of a sorted array.
  *
- * @param array  The sorted array to extract the values from
- * @return  The first ten rows of the sorted array
+ * @param   array  The sorted array to extract the values from
+ * @return  array  The first ten rows of the sorted array
  */
 function getTopTenValues(array) {
     // Extract top 10 values for bar graphs
     // from sorted data
     var topTen = [];
-    for(var i = 0; i < 10; i++) {
+    for (var i = 0; i < 10; i++) {
         topTen[i] = array[i][1];
     }
     return topTen;
@@ -417,25 +445,102 @@ function getTopTenValues(array) {
  * Creates a string containing the necessary HTML for the tables 
  * that we generate containing the top N (100) results.
  *
- * @param array  The sorted array to extract the values from
- * @param colOne Table heading for keys
- * @param colTwo Table heading for the values
- * @return  String containing the table's HTML
+ * @param   array   The sorted array to extract the values from
+ * @param   colOne  Table heading for keys
+ * @param   colTwo  Table heading for the values
+ * @return  string  The table's HTML
  */
 function buildTableHtml(array, colOne, colTwo) {
     var tableHtml = '<table><tr><th class="rank">Rank</th>' +
                     '<th class="colone">' + colOne + '</th>' +
                     '<th class="coltwo">' + colTwo + '</th></tr>';
-    for(var i = 0; i < array.length; i++) {
+    for (var i = 0; i < array.length; i++) {
         var rank = i +1;
         tableHtml += '<tr><td>' + rank + '</td>' +
                     '<td>' + array[i][0] + '</td>' +
                     '<td>' + array[i][1] + '</td>' +
                     '</tr>\n';
     }
-    tableHtml += "</table>";
+    tableHtml += '</table>';
 
     return tableHtml;
+}
+
+/**
+ * Generates overlay with additional information when 
+ * a table row is clicked.
+ *
+ * @param  evt  The click event that triggered the listener
+ */
+function processOverlay(evt) {
+    var overlay = document.createElement('div');
+    overlay.setAttribute('id', 'overlay');
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(overlay);
+
+    var popup = document.createElement('div');
+    popup.setAttribute('id', 'popup');
+    overlay.appendChild(popup);
+
+    var query = this.getElementsByTagName('td')[1].innerHTML;
+
+    // Get section id, ie: <div id="hosts">
+    var section = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
+
+    // Render data for hosts, including:
+    // Host IP, User Agent, Top Requests, and Top Pages
+    if (section == "hosts") {
+        // Look for a first occurence of user-agent
+        // Assume it doesn't change often enough 
+        // to warrant listing multiple
+        var userAgent = "";
+        for (var i = 0; i < logTable.length; i++) {
+            if (logTable[i]['host'] == query && logTable[i]['userAgent'] != "") {
+                userAgent = logTable[i]['userAgent'];
+                break;
+            }
+        }
+
+        // Generate a list of the most common requests by that host
+        var topRequests = "";
+        topRequests = '<div class="table left">' + 
+                      buildTableHtml(buildRequestTable(1000, query), 'Request', 'Hits') +
+                      '</div>';
+
+        // Generate a list of the most common pages requested by that host
+        var topPages = "";
+        topPages = '<div class="table right">' + 
+                   buildTableHtml(buildPageTable(1000, query), 'Page', 'Hits') +
+                   '</div>';
+
+        popup.innerHTML = '<p><strong>Host:</strong> ' + query + '</p>' +
+                          '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
+                          topRequests + topPages + '<div class="cl"></div>';
+
+    }
+
+    // Others coming soon
+    else {
+        popup.innerHTML = "Coming Soon";
+    }
+
+    popup.innerHTML += '<br /><a id="close" href="#">Click to Close</a>' +
+    '<div class="cl"></div>';
+
+    var close = popup.getElementsByTagName('a')[0];
+    close.addEventListener('click', removeOverlay, false);
+}
+
+/**
+ * Removes the overlay element from the document body, 
+ * restoring the previous screen. Also re-enables the 
+ * page's scrollbar.
+ *
+ * @param  evt  The click event that triggered the listener
+ */
+function removeOverlay(evt) {
+    document.body.style.overflow = 'visible';
+    document.body.removeChild(document.getElementById('overlay'));
 }
 
 /**
@@ -469,7 +574,17 @@ function setupPage() {
                 barChartInfo[i][2], 
                 'Hits');
         drawBarChart('#' + barChartInfo[i][0], getTopTenValues(barChartInfo[i][1]));
-    } 
+
+        // Get list of table rows to add event listeners to
+        var links = div.getElementsByClassName('container')[0]
+                        .getElementsByClassName('table')[0]
+                        .getElementsByTagName('tr');
+
+        // Add event listeners, but skip the row containing the table head
+        for (var j = 1; j < links.length; j++) {
+            links[j].addEventListener('click', processOverlay, false);
+        }
+    }
 }
 
 /**
@@ -477,8 +592,8 @@ function setupPage() {
  * to a div. Based on the documentation for the library:
  * http://mbostock.github.com/d3/tutorial/bar-1.html
  *
- * @param container  The ID of the div to append the SVG
- * @param data       An array with 10 elements
+ * @param  container  The ID of the div to append the SVG
+ * @param  data       An array with 10 elements
  */
 function drawBarChart(container, data) {
     var width = 384;
