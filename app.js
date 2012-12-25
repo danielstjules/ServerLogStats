@@ -83,7 +83,7 @@ function handleFileSelect(evt) {
             }
 
             // Split on new line, manipulate, and store in logTable
-            populateLogTable(evt.target.result.split(/[\r\n|\n]+/));
+            populateLogTable(evt.target.result.split(/[\n]+/));
 
             var n = 100;
             hostTable       = buildHostTable(n);
@@ -174,7 +174,7 @@ function populateLogTable(tempFileData) {
         startPos = tempFileData[i].indexOf('"', endPos + 1) + 1;
         endPos = tempFileData[i].indexOf('"', startPos);
         logTable[i]['userAgent'] = tempFileData[i].substring(startPos,endPos);
-    } 
+    }
 }
 
 /**
@@ -376,13 +376,16 @@ function buildRefDomainsTable(n) {
     var refDomainsHash = {};
     
     for (var i = 0; i < logTable.length; i++) {
-        // Increment ref domain frequency
         var refDomain = logTable[i]['ref'];
-        refDomain = refDomain.replace('http://','');
-        refDomain = refDomain.replace('https://','');
-        refDomain = refDomain.replace('www.','');
+
+        refDomain = refDomain.replace('http://',  '');
+        refDomain = refDomain.replace('https://', '');
+        refDomain = refDomain.replace('www.',     '');
+
         var endPos = refDomain.indexOf('/');
         var refDomain = refDomain.substring(0,endPos).toLowerCase();
+
+        // Increment ref domain frequency
         if (typeof refDomainsHash[refDomain] === 'undefined') {
             refDomainsHash[refDomain] = 1;
         } else {
