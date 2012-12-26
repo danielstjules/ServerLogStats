@@ -662,19 +662,16 @@ function drawBarChart(container, data) {
         .enter()
         .append('text')
             .attr('class', 'bar')
-            .attr('x', x)
+            .attr('x', function(d) { 
+                    if (x(d) > 30)
+                        return x(d) - 4;
+                    else
+                        return x(d) - 200;
+                })
             .attr('y', 
                 function(d) { 
-                    return y(d) + y.rangeBand() / 2 + 1;
+                    return y(d) + y.rangeBand() / 2 + 4;
                 })
-            .attr('dx',
-                function(d) {
-                    if (x(d) > 30)
-                        return -3;
-                    else
-                        return -200;
-                })
-            .attr('dy', '.38em')
             .attr('text-anchor', 'end')
             .text(String);
 
