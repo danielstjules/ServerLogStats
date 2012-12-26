@@ -550,10 +550,9 @@ function removeOverlay(evt) {
  * Adds the generated tables and bar charts to the page.
  */
 function setupPage() {
-    // Later, for the traffic/bandwidth graph
     var div = document.getElementById('traffic');
     div.style.display = 'block';
-    drawLineChart('#traffic', trafficTable);
+    drawTrafficLineChart('#traffic', trafficTable);
 
     // Next all the barcharts and tables
     // Format: div id, table var, col1 of table, col2 of table
@@ -684,17 +683,17 @@ function drawBarChart(container, data) {
 
 /**
  * Creates an SVG-based line chart with d3.js and appends it 
- * to a div.
+ * to a div. Generates two y axis, with two lines: one for 
+ * requests per day, and one for bandwidth per day.
  *
  * @param  string  The ID of the div to append the SVG
  * @param  array   4 by n table. Columns are index, date, 
  *                 requests, bandwidth.
  */
-function drawLineChart(container, array) {
-
+function drawTrafficLineChart(container, array) {
     var margin = {top: 20, right: 20, bottom: 30, left: 40};
     var width = 680;
-    var height = 180;
+    var height = 200;
 
     var lineChart = d3.select(container).append('svg')
         .attr('class', 'lineChart')
@@ -703,6 +702,7 @@ function drawLineChart(container, array) {
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+    // Date is formatted as dd/MMM/y
     var parseDate = d3.time.format('%d/%b/%Y').parse;
 
     var x = d3.time.scale().range([0, width]);
@@ -750,20 +750,20 @@ function drawLineChart(container, array) {
         .attr('class', 'y axis')
         .call(y1Axis)
         .append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('y', 14)
-        .style('text-anchor', 'end')
-        .text('Requests');
+            .attr('transform', 'rotate(-90)')
+            .attr('y', 14)
+            .style('text-anchor', 'end')
+            .text('Requests');
 
     lineChart.append('g')
         .attr('class', 'y2 axis')
         .attr('transform', 'translate(' + width + ',0)')
         .call(y2Axis)
         .append('text')
-        .attr('y', -7)
-        .attr('transform', 'rotate(-90)')
-        .style('text-anchor', 'end')
-        .text('Bandwidth (MB)');
+            .attr('y', -7)
+            .attr('transform', 'rotate(-90)')
+            .style('text-anchor', 'end')
+            .text('Bandwidth (MB)');
 
     lineChart.append('path')
         .datum(data)
@@ -774,6 +774,31 @@ function drawLineChart(container, array) {
         .datum(data)
         .attr('class', 'rLine')
         .attr('d', rLine);
+
+    // Add the legend for the two lines
+    lineChart.append('svg:rect')
+        .attr('fill', '#43bf60' )
+        .attr('x', width - 120)
+        .attr('y', 0)
+        .attr('width', 14)
+        .attr('height', 14);
+
+    lineChart.append('svg:text')
+        .attr('x', width - 100)
+        .attr('y', 10)
+        .text('Requests');
+
+    lineChart.append('svg:rect')
+        .attr('fill', '#595959' )
+        .attr('x', width - 120)
+        .attr('y', 30)
+        .attr('width', 14)
+        .attr('height', 14);
+
+    lineChart.append('svg:text')
+        .attr('x', width - 100)
+        .attr('y', 40)
+        .text('Bandwidth');
 }
 
 // Add the listeners

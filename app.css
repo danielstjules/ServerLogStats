@@ -256,13 +256,13 @@ input {
 .lineChart .rLine {
     fill: none;
     stroke: #43bf60;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
 }
 
 .lineChart .bLine {
     fill: none;
     stroke: #595959;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
 }
 
 .lineChart text {
