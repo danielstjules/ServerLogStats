@@ -237,3 +237,34 @@ input {
 .barChart rect:hover {
     fill: #74cd89;
 }
+
+.lineChart {
+    font: 10px sans-serif;
+}
+
+.lineChart .axis path,
+.lineChart .axis line {
+    fill: none;
+    stroke: #595959;
+    shape-rendering: crispEdges;
+}
+
+.lineChart .x.axis path {
+    display: none;
+}
+
+.lineChart .rLine {
+    fill: none;
+    stroke: #43bf60;
+    stroke-width: 1.5px;
+}
+
+.lineChart .bLine {
+    fill: none;
+    stroke: #595959;
+    stroke-width: 1.5px;
+}
+
+.lineChart text {
+    fill: #ddd;
+}

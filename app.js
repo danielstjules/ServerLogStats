@@ -551,8 +551,9 @@ function removeOverlay(evt) {
  */
 function setupPage() {
     // Later, for the traffic/bandwidth graph
-    // var div = document.getElementById('traffic');
-    // div.style.display = 'block';
+    var div = document.getElementById('traffic');
+    div.style.display = 'block';
+    drawLineChart('#traffic', trafficTable);
 
     // Next all the barcharts and tables
     // Format: div id, table var, col1 of table, col2 of table
@@ -679,6 +680,100 @@ function drawBarChart(container, data) {
         .attr('y1', 0)
         .attr('y2', height-40)
         .style('stroke', '#2e3031');
+}
+
+/**
+ * Creates an SVG-based line chart with d3.js and appends it 
+ * to a div.
+ *
+ * @param  string  The ID of the div to append the SVG
+ * @param  array   4 by n table. Columns are index, date, 
+ *                 requests, bandwidth.
+ */
+function drawLineChart(container, array) {
+
+    var margin = {top: 20, right: 20, bottom: 30, left: 40};
+    var width = 680;
+    var height = 180;
+
+    var lineChart = d3.select(container).append('svg')
+        .attr('class', 'lineChart')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    var parseDate = d3.time.format('%d/%b/%Y').parse;
+
+    var x = d3.time.scale().range([0, width]);
+    var y1 = d3.scale.linear().range([height, 0]);
+    var y2 = d3.scale.linear().range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom');
+
+    var y1Axis = d3.svg.axis()
+        .scale(y1)
+        .orient('left');
+
+    var y2Axis = d3.svg.axis()
+        .scale(y2)
+        .orient('right');
+
+    var rLine = d3.svg.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y1(d.requests); });
+
+    var bLine = d3.svg.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y2(d.bandwidth); });
+
+    var data = array.map(function(d) {
+        return {
+            date: parseDate(d[1]),
+            requests: d[2],
+            bandwidth: d[3]
+        }; 
+    });
+
+    x.domain(d3.extent(data, function(d) { return d.date; }));
+    y1.domain(d3.extent(data, function(d) { return d.requests; }));
+    y2.domain(d3.extent(data, function(d) { return d.bandwidth; }));
+
+    lineChart.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + height + ')')
+        .call(xAxis);
+
+    lineChart.append('g')
+        .attr('class', 'y axis')
+        .call(y1Axis)
+        .append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('y', 14)
+        .style('text-anchor', 'end')
+        .text('Requests');
+
+    lineChart.append('g')
+        .attr('class', 'y2 axis')
+        .attr('transform', 'translate(' + width + ',0)')
+        .call(y2Axis)
+        .append('text')
+        .attr('y', -7)
+        .attr('transform', 'rotate(-90)')
+        .style('text-anchor', 'end')
+        .text('Bandwidth (MB)');
+
+    lineChart.append('path')
+        .datum(data)
+        .attr('class', 'bLine')
+        .attr('d', bLine);
+
+    lineChart.append('path')
+        .datum(data)
+        .attr('class', 'rLine')
+        .attr('d', rLine);
 }
 
 // Add the listeners
