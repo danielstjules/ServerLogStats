@@ -102,8 +102,7 @@ h1:first-line {
 #pages,
 #ref,
 #refdomains,
-#errors,
-#largestrequests {
+#errors {
     height: 240px;
     display: none;
     background-color: #3b3c3d;
@@ -213,6 +212,7 @@ input {
 #popup #close {
     float: right;
     text-align: right;
+    cursor: pointer;
 }
 
 #popup a:hover {
@@ -251,6 +251,12 @@ input {
 
 .lineChart .x.axis path {
     display: none;
+}
+
+.lineChart .line {
+    fill: none;
+    stroke: #43bf60;
+    stroke-width: 1px;
 }
 
 .lineChart .rLine {

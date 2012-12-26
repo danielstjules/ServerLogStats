@@ -153,7 +153,7 @@ function populateLogTable(tempFileData) {
         // Match requests
         startPos = tempFileData[i].indexOf('/', endPos);
         endPos = tempFileData[i].indexOf(' ', startPos);
-        logTable[i]['requests'] = tempFileData[i].substring(startPos,endPos);
+        logTable[i]['request'] = tempFileData[i].substring(startPos,endPos);
 
         // Match http status
         startPos = tempFileData[i].indexOf('" ', endPos) + 2;
@@ -181,13 +181,21 @@ function populateLogTable(tempFileData) {
  * Builds a two dimensional array containing the number of hits 
  * and total bandwidth transferred in MB per day
  *
- * @return  array  Contains the hit count and bandwidth for each day
+ * @param   string  The column of the log table to match against
+ * @param   string  The string to match against the column
+ * @return  array   Contains the hit count and bandwidth for each day
  */
-function buildTrafficTable() {
+function buildTrafficTable(column, match) {
     var trafficHash = {};
     var megaByte = 1024 * 1024;
     
     for (var i = 0; i < logTable.length; i++) {
+        // filter out hits that don't match our criteria
+        if (typeof column !== 'undefined' && 
+            typeof match !== 'undefined' && 
+            logTable[i][column] != match)
+                continue;
+
         var date = Date.parse(logTable[i]['date'])
         if (isNaN(date) == false) {
             // Increment traffic
@@ -214,12 +222,22 @@ function buildTrafficTable() {
  * its number of requests. The table is N in size and is in 
  * descending order.
  *
- * @param  n  Number of top rows to include
+ * @param   n       Number of top rows to include
+ * @param   string  The column of the log table to match against
+ * @param   string  The string to match against the column
+ * @return  array   The host table
  */
-function buildHostTable(n) {
+function buildHostTable(n, column, match) {
     var hostHash = {};
     
     for (var i = 0; i < logTable.length; i++) {
+
+        // filter out hosts that don't match our criteria
+        if (typeof column !== 'undefined' && 
+            typeof match !== 'undefined' && 
+            logTable[i][column] != match)
+                continue;
+
         // Increment host frequency
         if (typeof hostHash[logTable[i]['host']] === 'undefined') {
             hostHash[logTable[i]['host']] = 1;
@@ -252,10 +270,10 @@ function buildRequestTable(n, host) {
             continue;
             
         // Increment requests frequency
-        if (typeof requestsHash[logTable[i]['requests']] === 'undefined') {
-            requestsHash[logTable[i]['requests']] = 1;
+        if (typeof requestsHash[logTable[i]['request']] === 'undefined') {
+            requestsHash[logTable[i]['request']] = 1;
         } else {
-            requestsHash[logTable[i]['requests']]++;
+            requestsHash[logTable[i]['request']]++;
         }
     }
 
@@ -299,12 +317,12 @@ function buildPageTable(n, host) {
         if (typeof host !== 'undefined' && logTable[i]['host'] != host)
             continue;
 
-        if (isNotMedia(logTable[i]['requests'])) {
+        if (isNotMedia(logTable[i]['request'])) {
             // Increment requests frequency
-            if (typeof pageHash[logTable[i]['requests']] === 'undefined') {
-                pageHash[logTable[i]['requests']] = 1;
+            if (typeof pageHash[logTable[i]['request']] === 'undefined') {
+                pageHash[logTable[i]['request']] = 1;
             } else {
-                pageHash[logTable[i]['requests']]++;
+                pageHash[logTable[i]['request']]++;
             }
         }
     }
@@ -353,10 +371,10 @@ function buildErrorTable(n) {
     for (var i = 0; i < logTable.length; i++) {
         // Increment error frequency
         if (logTable[i]['status'] ==  '404') {
-            if (typeof errorHash[logTable[i]['requests']] === 'undefined') {
-                errorHash[logTable[i]['requests']] = 1;
+            if (typeof errorHash[logTable[i]['request']] === 'undefined') {
+                errorHash[logTable[i]['request']] = 1;
             } else {
-                errorHash[logTable[i]['requests']]++;
+                errorHash[logTable[i]['request']]++;
             }
         }
     }
@@ -491,14 +509,14 @@ function processOverlay(evt) {
     var section = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
 
     // Render data for hosts, including:
-    // Host IP, User Agent, Top Requests, and Top Pages
-    if (section == "hosts") {
+    // User Agent, Top Requests, and Top Pages
+    if (section == 'hosts') {
         // Look for a first occurence of user-agent
         // Assume it doesn't change often enough 
         // to warrant listing multiple
-        var userAgent = "";
+        var userAgent = '';
         for (var i = 0; i < logTable.length; i++) {
-            if (logTable[i]['host'] == query && logTable[i]['userAgent'] != "") {
+            if (logTable[i]['host'] == query && logTable[i]['userAgent'] != '') {
                 userAgent = logTable[i]['userAgent'];
                 break;
             }
@@ -522,12 +540,43 @@ function processOverlay(evt) {
 
     }
 
-    // Others coming soon
-    else {
-        popup.innerHTML = "Coming Soon";
+    // TODO: Figure out what information we'd like to display
+    // for a referring domain. Ie: Page Rank, most common 
+    // referring pages, traffic from that website, etc
+    else if (section == 'refdomains') {
+        popup.innerHTML = 'Coming Soon';
     }
 
-    popup.innerHTML += '<br /><a id="close" href="#">Click to Close</a>' +
+    // Render data for all other sections, including:
+    // Traffic line chart, and Top Requesting Hosts
+    else {
+        var sectionInfo = {
+            'requests' : {columnName : 'request', htmlTitle : 'Request' },
+            'pages'    : {columnName : 'request', htmlTitle : 'Page'    },
+            'ref'      : {columnName : 'ref',     htmlTitle : 'Referrer'},
+            'errors'   : {columnName : 'request', htmlTitle : 'Error'   }
+        }
+
+        // Generate a list of the most common hosts
+        var topHosts = "";
+        topHosts = '<div class="table right">' + 
+                   buildTableHtml(
+                       buildHostTable(1000, sectionInfo[section]['columnName'], query), 
+                       'Host', 'Hits'
+                   ) + '</div>';
+
+        popup.innerHTML = '<p><strong>' + sectionInfo[section]['htmlTitle'] + 
+                          ':</strong> ' + query + '</p>' + topHosts;
+
+        drawLineChart(
+            '#popup',
+            buildTrafficTable(sectionInfo[section]['columnName'], query)
+        );
+
+        popup.innerHTML += '<div class="cl"></div>';
+    }
+
+    popup.innerHTML += '<br /><a id="close">Click to Close</a>' +
     '<div class="cl"></div>';
 
     var close = popup.getElementsByTagName('a')[0];
@@ -588,6 +637,71 @@ function setupPage() {
             links[j].addEventListener('click', processOverlay, false);
         }
     }
+}
+
+/**
+ * Creates an SVG-based line chart with d3.js and appends it 
+ * to a div. Generates a single y axis and line.
+ *
+ * @param  string  The ID of the div to append the SVG
+ * @param  array   3 by n table. Columns are index, date, 
+ *                 and requests.
+ */
+function drawLineChart(container, array) {
+    // TODO: Make it an interactie graph s.t. on mouseover,
+    // we can see the x-axis value (date)
+    var margin = {top: 20, right: 0, bottom: 30, left: 40};
+    var width = 320;
+    var height = 208;
+
+    var lineChart = d3.select(container).append('svg')
+        .attr('class', 'lineChart interactive')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    // Date is formatted as dd/MMM/y
+    var parseDate = d3.time.format('%d/%b/%Y').parse;
+
+    var x = d3.time.scale().range([0, width]);
+    var y = d3.scale.linear().range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom');
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient('left');
+
+    var line = d3.svg.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.requests); });
+
+    var data = array.map(function(d) {
+        return {
+            date: parseDate(d[1]),
+            requests: d[2]
+        }; 
+    });
+
+    x.domain(d3.extent(data, function(d) { return d.date; }));
+    y.domain(d3.extent(data, function(d) { return d.requests; }));
+
+    lineChart.append('g')
+        .attr('class', 'y axis')
+        .call(yAxis)
+        .append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('y', 14)
+            .style('text-anchor', 'end')
+            .text('Requests');
+
+    lineChart.append('path')
+        .datum(data)
+        .attr('class', 'line')
+        .attr('d', line);
 }
 
 /**
