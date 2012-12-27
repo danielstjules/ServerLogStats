@@ -1,13 +1,13 @@
-// Only accepts default Apache/Nginx log format at the moment
+// Written by Daniel St. Jules (http://danielstjules.com)
+// Only accepts default Apache/Nginx access log format:
 // http://httpd.apache.org/docs/2.2/logs.html#common
-// Tested with up to 200MB log files
-// Runs at ~10MB/s in Chrome on 2.4Ghz C2D
+// Runs at roughly 10MB/s in Chrome on a 2.4Ghz C2D MBP.
 
 // Store complete log information globally for later access
 var logTable = [];
 
-// Current tables, based on selected section of the log
-// Will be useful for later features
+// Current tables, based on current selection of the log. Will be used later to 
+// provide information within a certain range of dates or times.
 var hostTable       = [];
 var requestTable    = [];
 var pageTable       = [];
@@ -24,10 +24,9 @@ function showFileInput() {
 }
 
 /**
- * Handle the drop event. Stops the browser from just loading the file's 
- * contents and instead allows us to process the data. Also mimcs the 
- * system's copy action, which usually changes the cursor to indicate 
- * that it's a copy.
+ * Handle the drop event. Stops the browser from just loading the file's contents 
+ * and instead allows us to process the data. Also mimcs the system's copy action, 
+ * which usually changes the cursor to indicate that it's a copy.
  *
  * @param  evt  The drag over event that triggered the event listener
  */
@@ -38,20 +37,24 @@ function handleDragOver(evt) {
 }
 
 /**
- * Main function for the script. Reads the file and validates its 
- * first couple lines. If valid, it splits the file and populates 
- * the log table. It then calls the functions necessary to 
- * rank the data and add the charts and tables to the page.
+ * Main function for the script. Reads the file and validates its first couple 
+ * lines. If valid, it splits the file and populates the logTable. It then calls 
+ * the functions necessary to organize the entries and add the charts and tables 
+ * to the page.
  *
- * @param  evt  The drop event that triggered the event listener
+ * @param  evt  The drop or change event that triggered the event listener
  */
 function handleFileSelect(evt) {
     evt.stopPropagation();
     evt.preventDefault();
 
+    // Log current time
+    var startTime = new Date().getTime();
+
     // Check that we have access to the necessary APIs
     if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
-        alert('The File APIs necessary for this app are not supported by your browser.');
+        alert('The File APIs necessary for this app are not supported ' +
+            'by your browser.');
         return;
     }
 
@@ -63,21 +66,22 @@ function handleFileSelect(evt) {
         var file = files[0];
     }
 
-    // Output File Info
+    // Display File Info, replacing previous uploadbox contents
     document.getElementById('uploadbox').innerHTML = 
         '<strong>Analyzing: </strong>' + escape(file.name)+ ' - ' + 
         file.size + ' bytes';
 
     // Create new FileReader, and handle when done reading
     var reader = new FileReader();
+
     reader.onloadend = function(evt) {
         if (evt.target.readyState == FileReader.DONE) { // Check the ready state
-
             // Only read if log file looks valid, otherwise return and refresh
             if (!isValidLogInput(evt.target.result.slice(0, 1000))) {
                 document.getElementById('uploadbox').innerHTML += 
-                    '<br /><br /><strong>Error: </strong>File input not a valid log. This page will ' +
-                    'refresh automatically in 5 seconds. Please try again.';
+                    '<br /><br /><strong>Error: </strong>File input not a ' +
+                    'valid log. This page will refresh automatically in 5 ' +
+                    'seconds. Please try again.';
                 setTimeout('location.reload(true);',5000);
                 return;
             }
@@ -85,6 +89,7 @@ function handleFileSelect(evt) {
             // Split on new line, manipulate, and store in logTable
             populateLogTable(evt.target.result.split(/[\n]+/));
 
+            // Build individual tables; store top 100 for each
             var n = 100;
             hostTable       = buildHostTable(n);
             requestTable    = buildRequestTable(n);
@@ -96,6 +101,13 @@ function handleFileSelect(evt) {
             refDomainsTable = buildRefDomainsTable(n);
 
             setupPage();
+
+            // Done - let's show how long that took
+            var endTime = new Date().getTime();
+            var duration = (endTime - startTime) / 1000;
+
+            document.getElementById('footer').innerHTML = 
+                '<p>Script Execution Time: ' + duration + 's</p>';
         }
     };
 
@@ -103,32 +115,26 @@ function handleFileSelect(evt) {
 }
 
 /**
- * Uses regex to try to match the first couple lines of the 
- * log file. If it does, then we say it's a valid log. Or at 
- * least, those two lines are in Common Log Format. We don't 
- * try to process the whole log with regex for validation 
- * as it would take far too long running in a browser.
+ * Uses regex to try to match the first couple lines of the log file. If it 
+ * does, then we say it's a valid log in Common Log Format.
  *
  * @param   logSegment  Sample of the log file
  * @return  boolean     True if its valid, false otherwise
  */
 function isValidLogInput(logSegment) {
-    // We check the second in case the first one got 
-    // cut from trimming
+    // We check the second in case the first one got cut from trimming
     logSegment = logSegment.split(/[\r\n|\n]+/);
     var regExp = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]*" \d+ \d+ "[^"]*" "[^"]*"/m;
 
-    if ((logSegment[0].search(regExp) == -1) && 
-        (logSegment[1].search(regExp) == -1)) {
+    if (logSegment[0].search(regExp) == -1 && logSegment[1].search(regExp) == -1)
         return false;
-    }
 
     return true;
 }
 
 /**
- * Builds the logTable array of "associative" arrays. We then extract the host, 
- * date, request, status, bytes transferred, and referrer. 
+ * Builds the logTable array of hashes. We extract the host, date, request, 
+ * status, bytes transferred, and referrer and store in the logTable.
  *
  * @param  tempFileData  An array of strings containing the lines of the log
  */
@@ -137,8 +143,8 @@ function populateLogTable(tempFileData) {
         endPos   = 0;
 
     for (var i = 0; i < tempFileData.length; i++) {
-        // RegEx was too slow, so we're losing simplicity in favour of performance
-        // Table with: Host, date, requests, http status, bytes transferred, and ref
+        // RegEx is too slow for this, so we trade simplicity for performance
+        // Table with: host, date, requests, http status, bytes, and referrer
         logTable[i] = {};
 
         // Match Host
@@ -178,19 +184,21 @@ function populateLogTable(tempFileData) {
 }
 
 /**
- * Builds a two dimensional array containing the number of hits 
- * and total bandwidth transferred in MB per day
+ * Builds a sorted two dimensional array containing the number of hits and total 
+ * bandwidth transferred in MB per day. Also takes arguments for filtering the 
+ * traffic based on a matching criteria.
  *
- * @param   string  The column of the log table to match against
- * @param   string  The string to match against the column
- * @return  array   Contains the hit count and bandwidth for each day
+ * @param   column  The column of the log table to match against
+ * @param   match   The string for which to check equality
+ * @return  array   Table with columns: [int date, string date, hits, bandwidth]
  */
 function buildTrafficTable(column, match) {
     var trafficHash = {};
     var megaByte = 1024 * 1024;
+    var bytesTransferred = 0;
     
     for (var i = 0; i < logTable.length; i++) {
-        // filter out hits that don't match our criteria
+        // Filter out hits that don't match our criteria, if given
         if (typeof column !== 'undefined' && 
             typeof match !== 'undefined' && 
             logTable[i][column] != match)
@@ -200,14 +208,18 @@ function buildTrafficTable(column, match) {
         if (isNaN(date) == false) {
             // Increment traffic
             if (typeof trafficHash[logTable[i]['date']] === 'undefined') {
-                trafficHash[logTable[i]['date']] = [date, 1, parseInt(logTable[i]['bytes'])];
+                trafficHash[logTable[i]['date']] = 
+                    [date, 1, parseInt(logTable[i]['bytes'])];
             } else {
+                bytesTransferred = parseInt(logTable[i]['bytes']);
                 trafficHash[logTable[i]['date']][1]++;
-                trafficHash[logTable[i]['date']][2] += parseInt(logTable[i]['bytes']);
+                trafficHash[logTable[i]['date']][2] += bytesTransferred;
             }
         }
     }
 
+    // trafficHash[key][0] is the date stored as the number of seconds since 
+    // January 1, 1970. So we can sort on that column.
     var outputTable = [];
     for (var key in trafficHash) {
         outputTable.push([trafficHash[key][0],key, trafficHash[key][1], 
@@ -218,14 +230,13 @@ function buildTrafficTable(column, match) {
 }
 
 /**
- * Builds the hostTable, in which each row corresponds to a host and 
- * its number of requests. The table is N in size and is in 
- * descending order.
+ * Builds the hostTable, in which each row corresponds to a host and its number 
+ * of requests. The table is n in size and is in descending order.
  *
  * @param   n       Number of top rows to include
- * @param   string  The column of the log table to match against
- * @param   string  The string to match against the column
- * @return  array   The host table
+ * @param   column  The column of the log table to match against
+ * @param   match   The string for which to check equality
+ * @return  array   Table with columns [host, hits]
  */
 function buildHostTable(n, column, match) {
     var hostHash = {};
@@ -250,14 +261,13 @@ function buildHostTable(n, column, match) {
 }
 
 /**
- * Builds a requests table, in which each row corresponds to a request url 
- * and the number of occurences. The table is N in size and is in 
- * descending order. If the host is given, then only matches those requests
- * made by that host.
+ * Builds a sorted requests table, in which each row contains the request url and 
+ * the number of occurences. The table is N in size and is in descending order. 
+ * If host is given, then only matches those requests made by that host.
  *
  * @param   n      Number of top rows to include
  * @param   host   Host to filter requests by
- * @return  array  The request table
+ * @return  array  Table with columns [host, hits]
  */
 function buildRequestTable(n, host) {
     var requestsHash = {};
@@ -281,16 +291,15 @@ function buildRequestTable(n, host) {
 }
 
 /**
- * Builds the pageTable, in which each row corresponds to a page and 
- * its number of requests. Each request is checked against a 
- * list of common media extensions to ensure that it's indeed 
- * a page. The table is N in size and is in descending order.
- * If the host is given, then only matches those pages requested 
+ * Builds a sorted page table, in which each row corresponds to a page and its 
+ * number of requests. Each request is checked against a list of common media 
+ * extensions to ensure that it's indeed a page. The table is n in size and in 
+ * descending order. If the host is given, then it only matches pages requested 
  * by that host.
  *
  * @param   n      Number of top rows to include
  * @param   host   Host to filter pages by
- * @return  array  The pages table
+ * @return  array  Table with columns [page, hits]
  */
 function buildPageTable(n, host) {
     // Helper for ignoring common media file extensions
@@ -334,11 +343,12 @@ function buildPageTable(n, host) {
 
 
 /**
- * Builds the refTable, in which each row corresponds to a referrer and 
- * its number of requests. The table is N in size and is in 
- * descending order. We remove blank referrers from the results.
+ * Builds a sorted ref table, in which each row corresponds to an http referrer 
+ * and the number of requests originating from that location. The table is n in 
+ * size and is in descending order. Ignores blank http referrers.
  *
- * @param  n  Number of top rows to include
+ * @param   n      Number of top rows to include
+ * @return  array  Table with columns [ref, hits]
  */
 function buildRefTable(n) {
     var refHash = {};
@@ -352,6 +362,7 @@ function buildRefTable(n) {
         }
     }
 
+    // We remove blank referrers from the results
     delete refHash['-'];
     delete refHash[''];
 
@@ -359,11 +370,11 @@ function buildRefTable(n) {
 }
 
 /**
- * Builds the errorTable, in which each row corresponds to a 404 and 
- * its number of requests. The table is N in size and is in 
- * descending order.
+ * Builds a sorted error table, in which each row corresponds to a 404 and its 
+ * number of requests. The table is n in size and is in descending order.
  *
- * @param  n  Number of top rows to include
+ * @param   n      Number of top rows to include
+ * @return  array  Table with columns [request, hits]
  */
 function buildErrorTable(n) {
     var errorHash = {};
@@ -383,12 +394,13 @@ function buildErrorTable(n) {
 }
 
 /**
- * Builds the refDomainsTable, in which each row corresponds to an 
- * external referring domain and its number of requests. The table 
- * is N in size and is in descending order. We drop the top result 
- * as we assume its the log owner's domain.
+ * Builds the a referring domains table, in which each row corresponds to an 
+ * external referring domain and its number of requests. The table is N in size 
+ * and is in descending order. We drop the top result, assuming it's the log 
+ * owner's domain.
  *
- * @param  n  Number of top rows to include
+ * @param   n      Number of top rows to include
+ * @return  array  Table with columns [ref, hits]
  */
 function buildRefDomainsTable(n) {
     var refDomainsHash = {};
@@ -422,9 +434,8 @@ function buildRefDomainsTable(n) {
 }
 
 /**
- * Pushes the key/val pairs from a hash into an array and
- * sorts it by its value. It then trims the results to be 
- * less than or equal to n in size.
+ * Pushes the key/val pairs from a hash into an array and sorts it by its value. 
+ * It then trims the results to be less than or equal to n in size.
  *
  * @param  array  The hash to manipulate
  * @param  n      Number of top rows to include
@@ -443,14 +454,15 @@ function getTopNFromHash(hash, n) {
 
     // Keep top n or less and return
     array.length = n;
+
     return array.filter(function(){return true});
 }
 
 /**
- * Returns the first 10 elements of a sorted array.
+ * Returns the hits of the first 10 elements of a sorted array.
  *
  * @param   array  The sorted array to extract the values from
- * @return  array  The first ten rows of the sorted array
+ * @return  array  Contains the hits of the first ten rows of the sorted array
  */
 function getTopTenValues(array) {
     // Extract top 10 values for bar graphs
@@ -459,12 +471,13 @@ function getTopTenValues(array) {
     for (var i = 0; i < 10; i++) {
         topTen[i] = array[i][1];
     }
+
     return topTen;
 }
 
 /**
- * Creates a string containing the necessary HTML for the tables 
- * that we generate containing the top N (100) results.
+ * Creates a string with the necessary HTML to present the tables that we 
+ * generated containing the top N results.
  *
  * @param   array   The sorted array to extract the values from
  * @param   colOne  Table heading for keys
@@ -475,30 +488,33 @@ function buildTableHtml(array, colOne, colTwo) {
     var tableHtml = '<table><tr><th class="rank">Rank</th>' +
                     '<th class="colone">' + colOne + '</th>' +
                     '<th class="coltwo">' + colTwo + '</th></tr>';
+
     for (var i = 0; i < array.length; i++) {
         var rank = i +1;
         tableHtml += '<tr><td>' + rank + '</td>' +
-                    '<td>' + array[i][0] + '</td>' +
-                    '<td>' + array[i][1] + '</td>' +
-                    '</tr>\n';
+                     '<td>' + array[i][0] + '</td>' +
+                     '<td>' + array[i][1] + '</td>' +
+                     '</tr>\n';
     }
+
     tableHtml += '</table>';
 
     return tableHtml;
 }
 
 /**
- * Generates overlay with additional information when 
- * a table row is clicked.
+ * Generates an overlay with additional information when a table row is clicked.
  *
  * @param  evt  The click event that triggered the listener
  */
 function processOverlay(evt) {
+    // Dim the screen and disable the scrollbar
     var overlay = document.createElement('div');
     overlay.setAttribute('id', 'overlay');
     document.body.style.overflow = 'hidden';
     document.body.appendChild(overlay);
 
+    // Generate the popup and append it to the overlay
     var popup = document.createElement('div');
     popup.setAttribute('id', 'popup');
     overlay.appendChild(popup);
@@ -508,12 +524,10 @@ function processOverlay(evt) {
     // Get section id, ie: <div id="hosts">
     var section = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
 
-    // Render data for hosts, including:
-    // User Agent, Top Requests, and Top Pages
+    // Render data for hosts, including: User Agent, Top Requests, and Top Pages
     if (section == 'hosts') {
         // Look for a first occurence of user-agent
-        // Assume it doesn't change often enough 
-        // to warrant listing multiple
+        // We assume it doesn't change often enough to warrant listing multiple
         var userAgent = '';
         for (var i = 0; i < logTable.length; i++) {
             if (logTable[i]['host'] == query && logTable[i]['userAgent'] != '') {
@@ -525,30 +539,30 @@ function processOverlay(evt) {
         // Generate a list of the most common requests by that host
         var topRequests = "";
         topRequests = '<div class="table left">' + 
-                      buildTableHtml(buildRequestTable(1000, query), 'Request', 'Hits') +
-                      '</div>';
+            buildTableHtml(buildRequestTable(1000, query), 'Request', 'Hits') +
+            '</div>';
 
         // Generate a list of the most common pages requested by that host
         var topPages = "";
         topPages = '<div class="table right">' + 
-                   buildTableHtml(buildPageTable(1000, query), 'Page', 'Hits') +
-                   '</div>';
+            buildTableHtml(buildPageTable(1000, query), 'Page', 'Hits') +
+            '</div>';
 
+        // Add the the tables to the popup
         popup.innerHTML = '<p><strong>Host:</strong> ' + query + '</p>' +
-                          '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
-                          topRequests + topPages + '<div class="cl"></div>';
+            '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
+            topRequests + topPages + '<div class="cl"></div>';
 
     }
 
-    // TODO: Figure out what information we'd like to display
-    // for a referring domain. Ie: Page Rank, most common 
-    // referring pages, traffic from that website, etc
+    // TODO: Figure out what information we'd like to display for a ref domain. 
+    // Ie: Page Rank, most common referring pages, traffic from that website, etc
     else if (section == 'refdomains') {
         popup.innerHTML = 'Coming Soon';
     }
 
-    // Render data for all other sections, including:
-    // Traffic line chart, and Top Requesting Hosts
+    // Render data for all other sections. So far, this includes a single line 
+    // chart showing requests over time, and a table for requesting hosts
     else {
         var sectionInfo = {
             'requests' : {columnName : 'request', htmlTitle : 'Request' },
@@ -557,14 +571,18 @@ function processOverlay(evt) {
             'errors'   : {columnName : 'request', htmlTitle : 'Error'   }
         }
 
-        // Generate a list of the most common hosts
+        // Generate a list of the most common hosts, with a limit of 1000
+        var filteredHostsTable = buildHostTable(
+            1000,
+            sectionInfo[section]['columnName'],
+            query);
+
         var topHosts = "";
         topHosts = '<div class="table right">' + 
-                   buildTableHtml(
-                       buildHostTable(1000, sectionInfo[section]['columnName'], query), 
-                       'Host', 'Hits'
-                   ) + '</div>';
+                   buildTableHtml(filteredHostsTable, 'Host', 'Hits') + 
+                   '</div>';
 
+        // Add the table and line chart to the popup
         popup.innerHTML = '<p><strong>' + sectionInfo[section]['htmlTitle'] + 
                           ':</strong> ' + query + '</p>' + topHosts;
 
@@ -572,10 +590,9 @@ function processOverlay(evt) {
             '#popup',
             buildTrafficTable(sectionInfo[section]['columnName'], query)
         );
-
-        popup.innerHTML += '<div class="cl"></div>';
     }
 
+    // Append a close link and add the corresponding event listener
     popup.innerHTML += '<br /><a id="close">Click to Close</a>' +
     '<div class="cl"></div>';
 
@@ -584,9 +601,8 @@ function processOverlay(evt) {
 }
 
 /**
- * Removes the overlay element from the document body, 
- * restoring the previous screen. Also re-enables the 
- * page's scrollbar.
+ * Removes the overlay element from the document body, restoring the previous 
+ * screen. Also re-enables the page's scrollbar.
  *
  * @param  evt  The click event that triggered the listener
  */
@@ -596,22 +612,23 @@ function removeOverlay(evt) {
 }
 
 /**
- * Adds the generated tables and bar charts to the page.
+ * Adds the generated tables and bar charts to the main page.
  */
 function setupPage() {
+    // Add the traffic line chart
     var div = document.getElementById('traffic');
     div.style.display = 'block';
     drawTrafficLineChart('#traffic', trafficTable);
 
     // Next all the barcharts and tables
-    // Format: div id, table var, col1 of table, col2 of table
+    // Format: div id, table var, second column head, third column head
     var barChartInfo = [
-        ['hosts',       hostTable,        'Host'],
-        ['requests',    requestTable,     'Request'],
-        ['pages',       pageTable,        'Page'],
-        ['ref',         refTable,         'Referrer'],
-        ['refdomains',  refDomainsTable,  'Domain'],
-        ['errors',      errorTable,       'Request']
+        ['hosts',       hostTable,        'Host',      'Hits'],
+        ['requests',    requestTable,     'Request',   'Hits'],
+        ['pages',       pageTable,        'Page',      'Hits'],
+        ['ref',         refTable,         'Referrer',  'Hits'],
+        ['refdomains',  refDomainsTable,  'Domain',    'Hits'],
+        ['errors',      errorTable,       'Request',   'Hits']
     ];
 
     // Loop through each barChartInfo element
@@ -619,18 +636,22 @@ function setupPage() {
     for (var i = 0; i < barChartInfo.length; i++) {
         div = document.getElementById(barChartInfo[i][0]);
         div.style.display = 'block';
+
         div.getElementsByClassName('container')[0]
             .getElementsByClassName('table')[0]
             .innerHTML = buildTableHtml(
                 barChartInfo[i][1], 
                 barChartInfo[i][2], 
-                'Hits');
-        drawBarChart('#' + barChartInfo[i][0], getTopTenValues(barChartInfo[i][1]));
+                barChartInfo[i][3]);
+
+        drawBarChart(
+            '#' + barChartInfo[i][0], 
+            getTopTenValues(barChartInfo[i][1]));
 
         // Get list of table rows to add event listeners to
         var links = div.getElementsByClassName('container')[0]
-                        .getElementsByClassName('table')[0]
-                        .getElementsByTagName('tr');
+                       .getElementsByClassName('table')[0]
+                       .getElementsByTagName('tr');
 
         // Add event listeners, but skip the row containing the table head
         for (var j = 1; j < links.length; j++) {
