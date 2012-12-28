@@ -465,10 +465,13 @@ function getTopNFromHash(hash, n) {
  * @return  array  Contains the hits of the first ten rows of the sorted array
  */
 function getTopTenValues(array) {
-    // Extract top 10 values for bar graphs
-    // from sorted data
+    // Extract top 10 values for bar graphs from sorted data
+    var x = 10;
+    if (array.length < 10)
+        x = array.length;
+
     var topTen = [];
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < x; i++) {
         topTen[i] = array[i][1];
     }
 
@@ -661,12 +664,11 @@ function setupPage() {
 }
 
 /**
- * Creates an SVG-based line chart with d3.js and appends it 
- * to a div. Generates a single y axis and line.
+ * Creates an SVG-based line chart with d3.js and appends it to a div. Generates 
+ * a single y axis and line.
  *
  * @param  string  The ID of the div to append the SVG
- * @param  array   3 by n table. Columns are index, date, 
- *                 and requests.
+ * @param  array   n by 3 table. Columns are index, date, and requests.
  */
 function drawLineChart(container, array) {
     // TODO: Make it an interactie graph s.t. on mouseover,
@@ -726,24 +728,30 @@ function drawLineChart(container, array) {
 }
 
 /**
- * Creates an SVG-based barChart with d3.js and appends it 
- * to a div. Based on the documentation for the library:
- * http://mbostock.github.com/d3/tutorial/bar-1.html
+ * Creates an SVG-based barChart with a max 10 bars and appends it to a div.
  *
  * @param  container  The ID of the div to append the SVG
- * @param  data       An array with 10 elements
+ * @param  data       An array with 10 integers
  */
 function drawBarChart(container, data) {
-    var width = 384;
-    var height = 240;
-    var numTicks = 8;
+    var width = 384,
+        height = 240,
+        numTicks = 8,
+        i = 0,
+        j = 0,
+        pos = 0;
+
+    // Need distinct values for y's ordinal scale
+    var yDomain = [];
+    for (var k = 1; k <= data.length; k++)
+        yDomain.push(k);
 
     var x = d3.scale.linear()
         .domain([0, d3.max(data)])
         .range([0, width - 24]);
 
     var y = d3.scale.ordinal()
-        .domain(data)
+        .domain(yDomain)
         .rangeBands([0, height - 40]);
 
     var barChart = d3.select(container).append('svg')
@@ -774,13 +782,17 @@ function drawBarChart(container, data) {
             .attr('text-anchor', 'middle')
             .text(String);
 
-    // Draw rectangles, forcing a bar to display 
-    // even if it would barely be visible
+    // Impose a minimum width for bars
     barChart.selectAll('rect')
         .data(data)
         .enter()
         .append('rect')
-            .attr('y', y)
+            .attr('y',
+                function(d) {
+                    pos = y.rangeBand() * i;
+                    i += 1;
+                    return pos;
+                })
             .attr('width', 
                 function(d) {
                     if (x(d) > 3)
@@ -790,8 +802,7 @@ function drawBarChart(container, data) {
                 })
             .attr('height', y.rangeBand());
 
-    // Draw hits within bars, but don't display 
-    // hits if the bar is too short
+    // Draw hits within bars, but only if sufficiently wide
     barChart.selectAll('.bar')
         .data(data)
         .enter()
@@ -804,8 +815,10 @@ function drawBarChart(container, data) {
                         return x(d) - 200;
                 })
             .attr('y', 
-                function(d) { 
-                    return y(d) + y.rangeBand() / 2 + 4;
+                function() {
+                    pos = (y.rangeBand() * j) + y.rangeBand() / 2 + 4;
+                    j += 1;
+                    return pos;
                 })
             .attr('text-anchor', 'end')
             .text(String);
