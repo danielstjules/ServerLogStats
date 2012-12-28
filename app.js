@@ -826,9 +826,28 @@ function drawBarChart(container, data) {
  *                 requests, bandwidth.
  */
 function drawTrafficLineChart(container, array) {
-    var margin = {top: 20, right: 20, bottom: 30, left: 40};
-    var width = 680;
+    var margin = {top: 20, right: 6, bottom: 30, left: 20};
+    var width = 756;
     var height = 200;
+
+    // Date is formatted as dd/MMM/y
+    var parseDate = d3.time.format('%d/%b/%Y').parse;
+
+    var data = array.map(function(d) {
+        return {
+            date: parseDate(d[1]),
+            requests: d[2],
+            bandwidth: d[3]
+        }; 
+    });
+
+    // Get the length of the labels on the y-axes, and adjust margins/width
+    var y1Max = d3.max(data, function(d) { return d.requests; });
+    var y2Max = d3.max(data, function(d) { return d.bandwidth; });
+
+    margin.left += 5 * String(y1Max).length;
+    margin.right += 5 * String(y2Max).length;
+    width -= margin.left + margin.right;
 
     var lineChart = d3.select(container).append('svg')
         .attr('class', 'lineChart')
@@ -836,9 +855,6 @@ function drawTrafficLineChart(container, array) {
         .attr('height', height + margin.top + margin.bottom)
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-    // Date is formatted as dd/MMM/y
-    var parseDate = d3.time.format('%d/%b/%Y').parse;
 
     var x = d3.time.scale().range([0, width]);
     var y1 = d3.scale.linear().range([height, 0]);
@@ -863,14 +879,6 @@ function drawTrafficLineChart(container, array) {
     var bLine = d3.svg.line()
         .x(function(d) { return x(d.date); })
         .y(function(d) { return y2(d.bandwidth); });
-
-    var data = array.map(function(d) {
-        return {
-            date: parseDate(d[1]),
-            requests: d[2],
-            bandwidth: d[3]
-        }; 
-    });
 
     x.domain(d3.extent(data, function(d) { return d.date; }));
     y1.domain(d3.extent(data, function(d) { return d.requests; }));
