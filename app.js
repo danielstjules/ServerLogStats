@@ -830,13 +830,12 @@ function drawBarChart(container, data) {
 }
 
 /**
- * Creates an SVG-based line chart with d3.js and appends it 
- * to a div. Generates two y axis, with two lines: one for 
- * requests per day, and one for bandwidth per day.
+ * Creates an SVG-based line chart with d3.js and appends it to a div. Generates 
+ * two y axis, with two lines: one for requests per day, and one for bandwidth 
+ * per day.
  *
  * @param  string  The ID of the div to append the SVG
- * @param  array   4 by n table. Columns are index, date, 
- *                 requests, bandwidth.
+ * @param  array   n by 4 table. Columns are [int date, date, hits, bandwidth]
  */
 function drawTrafficLineChart(container, array) {
     var margin = {top: 20, right: 6, bottom: 30, left: 20};
@@ -869,6 +868,7 @@ function drawTrafficLineChart(container, array) {
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+    // TODO: Look into occasional y2 axis inversion
     var x = d3.time.scale().range([0, width]);
     var y1 = d3.scale.linear().range([height, 0]);
     var y2 = d3.scale.linear().range([height, 0]);
