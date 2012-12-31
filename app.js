@@ -838,8 +838,8 @@ function drawBarChart(container, data) {
  * @param  array   n by 4 table. Columns are [int date, date, hits, bandwidth]
  */
 function drawTrafficLineChart(container, array) {
-    var margin = {top: 20, right: 6, bottom: 30, left: 20};
-    var width = 756;
+    var margin = {top: 20, right: 6, bottom: 30, left: 16};
+    var width = 760;
     var height = 200;
 
     // Date is formatted as dd/MMM/y
@@ -857,8 +857,8 @@ function drawTrafficLineChart(container, array) {
     var y1Max = d3.max(data, function(d) { return d.requests; });
     var y2Max = d3.max(data, function(d) { return d.bandwidth; });
 
-    margin.left += 5 * String(y1Max).length;
-    margin.right += 5 * String(y2Max).length;
+    margin.left += 6 * String(y1Max).length;
+    margin.right += 6 * String(y2Max).length;
     width -= margin.left + margin.right;
 
     var lineChart = d3.select(container).append('svg')
