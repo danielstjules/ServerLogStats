@@ -848,8 +848,8 @@ function drawTrafficLineChart(container, array) {
     var data = array.map(function(d) {
         return {
             date: parseDate(d[1]),
-            requests: d[2],
-            bandwidth: d[3]
+            requests: parseInt(d[2]),
+            bandwidth: parseFloat(d[3])
         }; 
     });
 
@@ -868,10 +868,9 @@ function drawTrafficLineChart(container, array) {
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-    // TODO: Look into occasional y2 axis inversion
     var x = d3.time.scale().range([0, width]);
     var y1 = d3.scale.linear().range([height, 0]);
-    var y2 = d3.scale.linear().range([height, 0]);
+    var y2 = d3.scale.linear().range([height * 2 / 3, 0]);
 
     var xAxis = d3.svg.axis()
         .scale(x)
