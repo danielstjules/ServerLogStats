@@ -842,6 +842,30 @@ function drawTrafficLineChart(container, array) {
     var width = 760;
     var height = 200;
 
+    // Use a customTimeFormat for our traffic line charts
+    function timeFormat(formats) {
+        return function(date) {
+            var i = formats.length - 1;
+            var f = formats[i];
+
+            while (!f[1](date))
+                f = formats[--i];
+
+            return f[0](date);
+        };
+    }
+
+    var customTimeFormat = timeFormat([
+        [d3.time.format("%Y"), function() { return true; }],
+        [d3.time.format("%b"), function(d) { return d.getMonth(); }],
+        [d3.time.format("%b %d"), function(d) { return d.getDate() != 1; }],
+        [d3.time.format("%a %d"), function(d) { return d.getDay() && d.getDate() != 1; }],
+        [d3.time.format("%I %p"), function(d) { return d.getHours(); }],
+        [d3.time.format("%I:%M"), function(d) { return d.getMinutes(); }],
+        [d3.time.format(":%S"), function(d) { return d.getSeconds(); }],
+        [d3.time.format(".%L"), function(d) { return d.getMilliseconds(); }]
+    ]);
+
     // Date is formatted as dd/MMM/y
     var parseDate = d3.time.format('%d/%b/%Y').parse;
 
@@ -850,7 +874,7 @@ function drawTrafficLineChart(container, array) {
             date: parseDate(d[1]),
             requests: parseInt(d[2]),
             bandwidth: parseFloat(d[3])
-        }; 
+        };
     });
 
     // Get the length of the labels on the y-axes, and adjust margins/width
@@ -874,6 +898,7 @@ function drawTrafficLineChart(container, array) {
 
     var xAxis = d3.svg.axis()
         .scale(x)
+        .tickFormat(customTimeFormat)
         .orient('bottom');
 
     var y1Axis = d3.svg.axis()
