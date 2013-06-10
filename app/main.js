@@ -1,8 +1,8 @@
 /**
  * Only accepts default Apache/Nginx access log format:
  * http://httpd.apache.org/docs/2.2/logs.html#common
- * Runs at roughly 10MB/s in Chrome on a 2.4Ghz C2D MBP.
- * @author  Daniel St. Jules <http://danielstjules.com>
+ * Requires that /app/charts.js and /app/log.js be loaded
+ * Uses Zepto.js and d3.js
  */
 
 var log;
@@ -11,7 +11,8 @@ var log;
  * Display file input for those who don't want to use drag and drop
  */
 function showFileInput() {
-  document.getElementById('fileinput').style.display = 'block';
+  $('#fileinput').css('display', 'block');
+  return false;
 }
 
 /**
@@ -22,9 +23,12 @@ function showFileInput() {
  * @param  evt  The drag over event that triggered the event listener
  */
 function handleDragOver(evt) {
-  evt.stopPropagation(); // Stop further propogation in DOM
-  evt.preventDefault(); // Cancels the event
-  evt.dataTransfer.dropEffect = 'copy'; // Make it apparent that it's a copy
+  // Stop further propagation in DOM and cancel the event
+  evt.stopPropagation();
+  evt.preventDefault();
+  evt.dataTransfer.dropEffect = 'copy';
+
+  return false;
 }
 
 /**
@@ -44,37 +48,33 @@ function handleFileSelect(evt) {
 
   // Check that we have access to the necessary APIs
   if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
-    alert('The File APIs necessary for this app are not supported ' +
-      'by your browser.');
-    return;
+    alert('The File APIs necessary for this app are not supported by your browser.');
+    return false;
   }
 
-  // Get file
-  var files = document.getElementById('fileinput').files;
+  // Get the uploaded file
+  var files = $('#fileinput').attr('files');
   var file;
 
-  if (!files.length)
-    file = evt.dataTransfer.files[0];
-  else
+  if (files.length)
     file = files[0];
+  else
+    file = evt.dataTransfer.files[0];
 
-  // Display File Info, replacing previous uploadbox contents
-  document.getElementById('uploadbox').innerHTML =
-    '<strong>Analyzing: </strong>' + escape(file.name)+ ' - ' +
-    file.size + ' bytes';
+  // Display File Info, replacing previous upload box contents
+  $('#uploadbox').html('<strong>Analyzing: </strong>' + escape(file.name) +
+    ' - ' + file.size + ' bytes');
 
   // Create new FileReader, and handle when done reading
   var reader = new FileReader();
 
   reader.onloadend = function(evt) {
-    if (evt.target.readyState == FileReader.DONE) { // Check the ready state
+    if (evt.target.readyState == FileReader.DONE) {
       // Only read if log file looks valid, otherwise return and refresh
       if (!isValidLogInput(evt.target.result.slice(0, 1000))) {
-        document.getElementById('uploadbox').innerHTML +=
-          '<br /><br /><strong>Error: </strong>File input not a ' +
-          'valid log. This page will refresh automatically in 5 ' +
-          'seconds. Please try again.';
-        setTimeout('location.reload(true);',5000);
+        $('#uploadbox').append('<br /><br />Error: File input not a valid log. ' +
+          'This page will refresh automatically in 4 seconds');
+        setTimeout('location.reload(true);',4000);
         return;
       }
 
@@ -88,12 +88,13 @@ function handleFileSelect(evt) {
       var endTime = new Date().getTime();
       var duration = (endTime - startTime) / 1000;
 
-      document.getElementById('footer').innerHTML =
-        '<p>Script Execution Time: ' + duration + 's</p>';
+      $('#footer').html('<p>Script Execution Time: ' + duration + 's</p>');
     }
   };
 
   reader.readAsText(file);
+
+  return false;
 }
 
 /**
@@ -135,148 +136,14 @@ function getTopTenValues(array) {
 }
 
 /**
- * Creates a string with the necessary HTML to present the tables that we 
- * generated containing the top N results.
- *
- * @param   array   The sorted array to extract the values from
- * @param   colOne  Table heading for keys
- * @param   colTwo  Table heading for the values
- * @return  string  The table's HTML
- */
-function buildTableHtml(array, colOne, colTwo) {
-  var tableHtml = '<table><tr><th class="rank">Rank</th>' +
-          '<th class="colone">' + colOne + '</th>' +
-          '<th class="coltwo">' + colTwo + '</th></tr>';
-
-  for (var i = 0; i < array.length; i++) {
-    var rank = i +1;
-    tableHtml += '<tr><td>' + rank + '</td>' +
-           '<td>' + array[i][0] + '</td>' +
-           '<td>' + array[i][1] + '</td>' +
-           '</tr>\n';
-  }
-
-  tableHtml += '</table>';
-
-  return tableHtml;
-}
-
-/**
- * Generates an overlay with additional information when a table row is clicked.
- *
- * @param  evt  The click event that triggered the listener
- */
-function processOverlay(evt) {
-  // Dim the screen and disable the scrollbar
-  var overlay = document.createElement('div');
-  overlay.setAttribute('id', 'overlay');
-  document.body.style.overflow = 'hidden';
-  document.body.appendChild(overlay);
-
-  // Generate the popup and append it to the overlay
-  var popup = document.createElement('div');
-  popup.setAttribute('id', 'popup');
-  overlay.appendChild(popup);
-
-  var query = this.getElementsByTagName('td')[1].innerHTML;
-
-  // Get section id, ie: <div id="hosts">
-  var section = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
-
-  // Render data for hosts, including: User Agent, Top Requests, and Top Pages
-  if (section == 'hosts') {
-    // Look for a first occurence of user-agent
-    // We assume it doesn't change often enough to warrant listing multiple
-    var userAgent = '';
-    for (var i = 0; i < log.logTable.length; i++) {
-      if (log.logTable[i]['host'] == query && log.logTable[i]['userAgent']) {
-        userAgent = log.logTable[i]['userAgent'];
-        break;
-      }
-    }
-
-    // Generate a list of the most common requests by that host
-    var topRequests = "";
-    topRequests = '<div class="table left">' +
-      buildTableHtml(log.parseRequests(1000, query), 'Request', 'Hits') +
-      '</div>';
-
-    // Generate a list of the most common pages requested by that host
-    var topPages = "";
-    topPages = '<div class="table right">' +
-      buildTableHtml(log.parsePages(1000, query), 'Page', 'Hits') +
-      '</div>';
-
-    // Add the the tables to the popup
-    popup.innerHTML = '<p><strong>Host:</strong> ' + query + '</p>' +
-      '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
-      topRequests + topPages + '<div class="cl"></div>';
-
-  }
-
-  // TODO: Figure out what information we'd like to display for a ref domain. 
-  // Ie: Page Rank, most common referring pages, traffic from that website, etc
-  else if (section == 'refdomains') {
-    popup.innerHTML = 'Coming Soon';
-  }
-
-  // Render data for all other sections. So far, this includes a single line 
-  // chart showing requests over time, and a table for requesting hosts
-  else {
-    var sectionInfo = {
-      'requests' : {columnName : 'request', htmlTitle : 'Request' },
-      'pages'    : {columnName : 'request', htmlTitle : 'Page'    },
-      'ref'      : {columnName : 'ref',     htmlTitle : 'Referrer'},
-      'errors'   : {columnName : 'request', htmlTitle : 'Error'   }
-    };
-
-    // Generate a list of the most common hosts, with a limit of 1000
-    var filteredHostsTable = log.parseHosts(
-      1000,
-      sectionInfo[section]['columnName'],
-      query);
-
-    var topHosts = "";
-    topHosts = '<div class="table right">' +
-           buildTableHtml(filteredHostsTable, 'Host', 'Hits') +
-           '</div>';
-
-    // Add the table and line chart to the popup
-    popup.innerHTML = '<p><strong>' + sectionInfo[section]['htmlTitle'] +
-              ':</strong> ' + query + '</p>' + topHosts;
-
-    Charts.drawLineChart(
-      '#popup',
-      log.parseTraffic(sectionInfo[section]['columnName'], query)
-    );
-  }
-
-  // Append a close link and add the corresponding event listener
-  popup.innerHTML += '<br /><a id="close">Click to Close</a>' +
-  '<div class="cl"></div>';
-
-  var close = popup.getElementsByTagName('a')[0];
-  close.addEventListener('click', removeOverlay, false);
-}
-
-/**
- * Removes the overlay element from the document body, restoring the previous 
- * screen. Also re-enables the page's scrollbar.
- *
- * @param  evt  The click event that triggered the listener
- */
-function removeOverlay(evt) {
-  document.body.style.overflow = 'visible';
-  document.body.removeChild(document.getElementById('overlay'));
-}
-
-/**
  * Adds the generated tables and bar charts to the main page.
  */
 function setupPage() {
+  var div;
+  var tableHtml;
+
   // Add the traffic line chart
-  var div = document.getElementById('traffic');
-  div.style.display = 'block';
+  $('#traffic').css('display', 'block');
   Charts.drawTrafficLineChart('#traffic', log.traffic);
 
   // Next all the barcharts and tables
@@ -293,39 +160,159 @@ function setupPage() {
   // Loop through each barChartInfo element
   // and display the div, build the bar chart, and the table
   for (var i = 0; i < barChartInfo.length; i++) {
-    div = document.getElementById(barChartInfo[i][0]);
-    div.style.display = 'block';
+    div = $('#' + barChartInfo[i][0]);
+    div.css('display', 'block');
 
-    div.getElementsByClassName('container')[0]
-      .getElementsByClassName('table')[0]
-      .innerHTML = buildTableHtml(
-        barChartInfo[i][1],
-        barChartInfo[i][2],
+    tableHtml = buildTableHtml(barChartInfo[i][1], barChartInfo[i][2],
         barChartInfo[i][3]);
 
-    Charts.drawBarChart(
-      '#' + barChartInfo[i][0],
+    div.find('.container')[0].getElementsByClassName('table')[0].innerHTML = tableHtml;
+
+    Charts.drawBarChart('#' + barChartInfo[i][0],
       getTopTenValues(barChartInfo[i][1]));
 
     // Get list of table rows to add event listeners to
-    var links = div.getElementsByClassName('container')[0]
-             .getElementsByClassName('table')[0]
-             .getElementsByTagName('tr');
+    var links = div.find('.container')[0]
+                   .getElementsByClassName('table')[0]
+                   .getElementsByTagName('tr');
 
     // Add event listeners, but skip the row containing the table head
     for (var j = 1; j < links.length; j++) {
-      links[j].addEventListener('click', processOverlay, false);
+      $(links[j]).on('click', processOverlay);
     }
   }
 }
 
+/**
+ * Creates a string with the necessary HTML to present the tables that we 
+ * generated containing the top N results.
+ *
+ * @param   array   The sorted array to extract the values from
+ * @param   colOne  Table heading for keys
+ * @param   colTwo  Table heading for the values
+ * @return  string  The table's HTML
+ */
+function buildTableHtml(array, colOne, colTwo) {
+  var tableHtml = '<table><tr><th class="rank">Rank</th>' +
+                  '<th class="colone">' + colOne + '</th>' +
+                  '<th class="coltwo">' + colTwo + '</th></tr>';
+
+  for (var i = 0; i < array.length; i++) {
+    var rank = i + 1;
+    tableHtml += '<tr><td>' + rank + '</td>' +
+                 '<td>' + array[i][0] + '</td>' +
+                 '<td>' + array[i][1] + '</td>' +
+                 '</tr>\n';
+  }
+
+  tableHtml += '</table>';
+
+  return tableHtml;
+}
+
+/**
+ * Generates an overlay with additional information when a table row is clicked.
+ *
+ * @param  evt  The click event that triggered the listener
+ */
+function processOverlay(evt) {
+  // Dim the screen and disable the scrollbar
+  var body = $('body');
+  var overlay = $('<div />', { id: 'overlay' });
+  body.css('overflow', 'hidden');
+  body.append(overlay);
+
+  // Generate the popup and append it to the overlay
+  var popup = $('<div />', { id: 'popup' });
+  overlay.append(popup);
+
+  var query = this.getElementsByTagName('td')[1].innerHTML;
+
+  // Get section id, ie: <div id="hosts" class="section">
+  var section = $(this).closest('.section').attr('id');
+
+  // Render data for hosts, including: User Agent, Top Requests, and Top Pages
+  if (section == 'hosts') {
+    // Use the first occurrence of user-agent (ignore changes)
+    var userAgent = '';
+    for (var i = 0; i < log.logTable.length; i++) {
+      if (log.logTable[i]['host'] == query && log.logTable[i]['userAgent']) {
+        userAgent = log.logTable[i]['userAgent'];
+        break;
+      }
+    }
+
+    // Generate a list of the most common requests by that host
+    var topRequests = '<div class="table left">' +
+      buildTableHtml(log.parseRequests(1000, query), 'Request', 'Hits') +
+      '</div>';
+
+    // Generate a list of the most common pages requested by that host
+    var topPages = '<div class="table right">' +
+      buildTableHtml(log.parsePages(1000, query), 'Page', 'Hits') +
+      '</div>';
+
+    // Add the the tables to the popup
+    popup.html('<p><strong>Host:</strong> ' + query + '</p>' +
+               '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
+               topRequests + topPages + '<div class="cl"></div>');
+  }
+
+  // TODO: Figure out what information we'd like to display for a ref domain. 
+  // IE: Page Rank, most common referring pages, traffic from that website, etc
+  else if (section == 'refdomains') {
+    popup.html('Coming Soon');
+  }
+
+  // Render data for all other sections. So far, this includes a single line 
+  // chart showing requests over time, and a table for requesting hosts
+  else {
+    var sectionInfo = {
+      'requests' : {columnName : 'request', htmlTitle : 'Request' },
+      'pages'    : {columnName : 'request', htmlTitle : 'Page'    },
+      'ref'      : {columnName : 'ref',     htmlTitle : 'Referrer'},
+      'errors'   : {columnName : 'request', htmlTitle : 'Error'   }
+    };
+
+    // Generate a list of the most common hosts, with a limit of 1000
+    var filteredHostsTable = log.parseHosts( 1000,
+      sectionInfo[section]['columnName'], query);
+
+    var topHosts = '<div class="table right">' +
+      buildTableHtml(filteredHostsTable, 'Host', 'Hits') + '</div>';
+
+    // Add the table and line chart to the popup
+    popup.html('<p><strong>' + sectionInfo[section]['htmlTitle'] +
+      ':</strong> ' + query + '</p>' + topHosts);
+
+    Charts.drawLineChart('#popup',
+      log.parseTraffic(sectionInfo[section]['columnName'], query));
+  }
+
+  // Append a close link and add the corresponding event listener
+  popup.append('<br /><a id="close">Click to Close</a><div class="cl"></div>');
+  $('#close').on('click', removeOverlay);
+
+  return false;
+}
+
+/**
+ * Removes the overlay element from the document body, restoring the previous 
+ * screen. Also re-enables the page's scrollbar.
+ *
+ * @param  evt  The click event that triggered the listener
+ */
+function removeOverlay(evt) {
+  $('body').css('overflow', 'visible');
+  $('#overlay').remove();
+
+  return false;
+}
+
 // Add the listeners
-var uploadBox = document.getElementById('uploadbox');
-uploadBox.addEventListener('dragover', handleDragOver, false);
-uploadBox.addEventListener('drop', handleFileSelect, false);
+var uploadBox = $('#uploadbox');
+uploadBox.on('dragover', handleDragOver);
+uploadBox.on('drop', handleFileSelect);
 
-var showFileInputLink = document.getElementById('showfileinput');
-showFileInputLink.addEventListener('click', showFileInput, false);
-
-var fileInput = document.getElementById('fileinput');
-fileInput.addEventListener('change', handleFileSelect, false);
+$('#showfileinput').on('click', showFileInput);
+$('#fileinput').on('change', handleFileSelect);
