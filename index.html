@@ -1,87 +1,98 @@
 <!DOCTYPE html>
 <head>
-    <title>ServerLogStats.com</title>
-    <meta name="description" content="Visualize web server logs">
-    <script type="text/javascript" src="http://d3js.org/d3.v2.min.js"></script>
-    <link href="http://fonts.googleapis.com/css?family=PT+Sans:400,700" rel="stylesheet" type="text/css">
-    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,800" rel="stylesheet" type="text/css">
-    <link href="css/main.css" rel="stylesheet" type="text/css">
-    <meta charset="UTF-8">
+  <title>ServerLogStats.com</title>
+  <meta name="description" content="Visualize web server logs">
+  <script type="text/javascript" src="http://d3js.org/d3.v2.min.js"></script>
+  <link href="http://fonts.googleapis.com/css?family=PT+Sans:400,700" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,800" rel="stylesheet" type="text/css">
+  <link href="css/main.css" rel="stylesheet" type="text/css">
+  <meta charset="UTF-8">
 </head>
 <body>
 
-<a style="position: absolute; top: 0; right: 0; border: 0;" href="https://github.com/you">
-    <img src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub">
+<a style="position: absolute; top: 0; right: 0; border: 0;" href="https://github.com/danielstjules/ServerLogStats">
+  <img src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub">
 </a>
 
 <div id="header">
-    <div id="headercontainer">
-        <h1>Server LogStats</h1>
-        <span>
-            Generate apache/nginx log statistics and graphs right in your browser!
-            Your logs and visitor information never hit our servers thanks to HTML5, 
-            which is important, cause we all care about privacy. Want to help improve 
-            this app? Fork it on <a href="https://github.com/danielstjules/ServerLogStats">Github</a> 
-            or <a href="https://github.com/danielstjules/ServerLogStats/issues">open an issue</a>.
-        </span>
-    </div>
+  <div id="headercontainer">
+    <h1>Server LogStats</h1>
+    <span>
+      Generate apache/nginx log statistics and graphs right in your browser!
+      Your logs and visitor information never hit our servers thanks to HTML5, 
+      which is important, cause we all care about privacy. Want to help improve 
+      this app? Fork it on <a href="https://github.com/danielstjules/ServerLogStats">Github</a> 
+      or <a href="https://github.com/danielstjules/ServerLogStats/issues">open an issue</a>.
+    </span>
+  </div>
 </div>
 
 <div id="content">
-    <div id="uploadbox">
-        Drag and drop your log here to render statistics, or <a id="showfileinput" href="#">click here</a> 
-        to browse your computer for the file. <input type="file" id="fileinput" name="fileinput" />
+  <div id="uploadbox">
+    Drag and drop your log here to render statistics, or <a id="showfileinput" href="#">click here</a> 
+    to browse your computer for the file. <input type="file" id="fileinput" name="fileinput" />
+  </div>
+
+  <div id="traffic">
+  </div>
+
+  <div id="hosts">
+    <div class="container">
+      <strong>Top 100 Hosts</strong>
+      <div class="table"></div>
     </div>
-    <div id="traffic">
+    <strong>Top 10 Hosts</strong>
+  </div>
+
+  <div id="requests">
+    <div class="container">
+      <strong>Top 100 Requests</strong>
+      <div class="table"></div>
     </div>
-    <div id="hosts">
-        <div class="container">
-            <strong>Top 100 Hosts</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 Hosts</strong>
+    <strong>Top 10 Requests</strong>
+  </div>
+
+  <div id="pages">
+    <div class="container">
+      <strong>Top 100 Pages</strong>
+      <div class="table"></div>
     </div>
-    <div id="requests">
-        <div class="container">
-            <strong>Top 100 Requests</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 Requests</strong>
+    <strong>Top 10 Pages</strong>
+  </div>
+
+  <div id="ref">
+    <div class="container">
+      <strong>Top 100 Referring Pages</strong>
+      <div class="table"></div>
     </div>
-    <div id="pages">
-        <div class="container">
-            <strong>Top 100 Pages</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 Pages</strong>
+    <strong>Top 10 Referring Pages</strong>
+  </div>
+
+  <div id="refdomains">
+    <div class="container">
+      <strong>Top 100 External Referring Domains</strong>
+      <div class="table"></div>
     </div>
-    <div id="ref">
-        <div class="container">
-            <strong>Top 100 Referring Pages</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 Referring Pages</strong>
+    <strong>Top 10 External Referring Domains</strong>
+  </div>
+
+  <div id="errors">
+    <div class="container">
+      <strong>Top 100 404s</strong>
+      <div class="table"></div>
     </div>
-    <div id="refdomains">
-        <div class="container">
-            <strong>Top 100 External Referring Domains</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 External Referring Domains</strong>
-    </div>
-    <div id="errors">
-        <div class="container">
-            <strong>Top 100 404s</strong>
-            <div class="table"></div>
-        </div>
-        <strong>Top 10 404s</strong>
-    </div>
-    <div id="footer">
-        <p>Maximum recommended log upload size: 200MB</p>
-        <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
-    </div>
+    <strong>Top 10 404s</strong>
+  </div>
+
+  <div id="footer">
+    <p>Maximum recommended log upload size: 200MB</p>
+    <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
+  </div>
 </div>
 
+<script type="text/javascript" src="lib/jquery-2.0.2.min.js"></script>
+<script type="text/javascript" src="app/charts.js"></script>
+<script type="text/javascript" src="app/log.js"></script>
 <script type="text/javascript" src="app/main.js"></script>
 
 </body>
