@@ -78,8 +78,8 @@ function handleFileSelect(evt) {
         return;
       }
 
-      // Split on new line, manipulate, and store in logTable
-      log = new Log(evt.target.result.split(/[\n]+/));
+      // The log file
+      log = new Log(evt.target.result);
       log.parse();
 
       setupPage();

@@ -1,9 +1,8 @@
 /**
- * Given an array of strings containing the entries of the log (split on new line), 
- * parses the log data
+ * Given the file contents of an Apache/Nginx log, parses the log data
  */
 
-function Log(logEntries) {
+function Log(logFile) {
   // Table with: host, date, request, status (http status), bytes (transferred), 
   // referrer and userAgent. Example access: logTable[1]['request']
   this.logTable    = [];
@@ -52,6 +51,9 @@ function Log(logEntries) {
   this.parse = function () {
     var startPos = 0;
     var endPos   = 0;
+
+    // Split log file on new line
+    var logEntries = logFile.split(/[\n]+/);
 
     for (var i = 0; i < logEntries.length; i++) {
       // RegEx is too slow for this, so we trade simplicity for performance
