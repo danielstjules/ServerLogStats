@@ -56,6 +56,10 @@ function Log(logFile) {
     var logEntries = logFile.split(/[\n]+/);
 
     for (var i = 0; i < logEntries.length; i++) {
+      // Ignore blank lines
+      if(!logEntries[i])
+        continue;
+
       // RegEx is too slow for this, so we trade simplicity for performance
       this.logTable[i] = {};
       line = logEntries[i];
@@ -314,8 +318,7 @@ function Log(logFile) {
   /**
    * Builds the referring domains table, in which each row corresponds to an 
    * external referring domain and its number of requests. The table is N in size 
-   * and is in descending order. We drop the top result, assuming it's the log 
-   * owner's domain.
+   * and is in descending order.
    *
    * @param   n      Number of top rows to include
    * @return  array  Table with columns [ref, hits]
@@ -344,8 +347,7 @@ function Log(logFile) {
     delete refDomains[''];
 
     // Assume top result is your domain, and we only want external
-    var outputTable = getTopNFromHash(refDomains, n+1);
-    outputTable.shift();
+    var outputTable = getTopNFromHash(refDomains, n);
 
     return outputTable;
   };

@@ -10,6 +10,7 @@ var Fixtures = function() {
   // Here's the example log file's contents
   var logFile =
     '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET / HTTP/1.1" 200 1588 "http://localhost" "Mozilla/4.0"\n' +
+    '\n'+
     '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET /assets/style.css HTTP/1.1" 200 2041 "http://localhost" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET /js/jquery-1.3.2.min.js HTTP/1.1" 200 57254 "http://localhost" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/twitter.jpg HTTP/1.1" 200 2279 "http://localhost" "Mozilla/4.0"\n' +
