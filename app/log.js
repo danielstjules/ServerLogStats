@@ -93,7 +93,21 @@ function Log(logFile) {
       // Match bytes
       startPos = endPos + 1;
       endPos = line.indexOf(' ', startPos);
-      this.logTable[i]['bytes'] = line.substring(startPos, endPos);
+
+      // If we couldn't find a space after bytes, then assume the line is in 
+      // Common Log Format. In that case, bytes is the rest of the line, and we 
+      // can go to the next
+      if (endPos === -1) {
+        this.logTable[i]['bytes'] = line.substring(startPos);
+        this.logTable[i]['referrer'] = "";
+        this.logTable[i]['userAgent'] = "";
+        continue;
+      } else {
+        this.logTable[i]['bytes'] = line.substring(startPos, endPos);
+      }
+
+      // Otherwise, we're dealing with the Combined Log Format
+      // In that case we need referrer and userAgent as well
 
       // Match ref
       startPos = line.indexOf('"', endPos) + 1;
