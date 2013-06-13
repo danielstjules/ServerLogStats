@@ -214,9 +214,9 @@ var Charts = function() {
 
     var data = array.map(function(d) {
       return {
-        date: parseDate(d[1]),
-        requests: parseInt(d[2], 10),
-        bandwidth: parseFloat(d[3])
+        date: parseDate(d.date),
+        requests: parseInt(d.hits, 10),
+        bandwidth: parseFloat(d.bandwidth)
       };
     });
 

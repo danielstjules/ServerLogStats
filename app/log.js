@@ -133,13 +133,13 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted two dimensional array containing the number of hits and total 
+   * Builds a sorted array of objects containing the number of hits and total 
    * bandwidth transferred in MB per day. Also takes arguments for filtering the 
    * traffic based on a matching criteria.
    *
    * @param   column  The column of the log table to match against
    * @param   match   The string for which to check equality
-   * @return  array   Table with columns: [int date, string date, hits, bandwidth]
+   * @return  array   Array of objects with: unixTime, date, hits, bandwidth
    */
   this.parseTraffic = function(column, match) {
     var traffic = {};
@@ -148,33 +148,42 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // Filter out hits that don't match our criteria, if given
-      if (!column && !match && this.logTable[i][column] != match)
+      if (column && match && this.logTable[i][column] != match)
           continue;
 
       var date = Date.parse(this.logTable[i]['date']);
       if (!isNaN(date)) {
         bytesTransferred = parseInt(this.logTable[i]['bytes'], 10);
+        dateString = this.logTable[i]['date'];
         // Increment traffic
-        if (!traffic[this.logTable[i]['date']]) {
-          traffic[this.logTable[i]['date']] = [date, 1, bytesTransferred];
+        if (!traffic[dateString]) {
+          traffic[dateString] = { 'unixTime' : date, 'hits': 1,
+                                  'bandwidth': bytesTransferred };
         } else {
-          traffic[this.logTable[i]['date']][1]++;
-          traffic[this.logTable[i]['date']][2] += bytesTransferred;
+          traffic[dateString]['hits']++;
+          traffic[dateString]['bandwidth'] += bytesTransferred;
         }
       }
     }
 
-    // traffic[key][0] is the date stored as the number of seconds since 
-    // January 1, 1970. So we can sort on that column.
+    // Add an object for each date, and convert bandwidth to MB
     var output = [];
     for (var key in traffic) {
-      output.push([
-        traffic[key][0], key, traffic[key][1],
-        (traffic[key][2] / megaByte).toFixed(2)
-      ]);
+      traffic[key]['bandwidth'] = (traffic[key]['bandwidth'] / megaByte).toFixed(2);
+      traffic[key]['date'] = key;
+      output.push(traffic[key]);
     }
 
-    return output.sort();
+    // Sort objects by their unixTime attribute
+    function compareTime(a, b) {
+      if (a.unixTime < b.unixTime)
+         return -1;
+      if (a.unixTime > b.unixTime)
+        return 1;
+      return 0;
+    }
+
+    return output.sort(compareTime);
   };
 
   /**
