@@ -74,8 +74,8 @@ var Charts = function() {
 
     var data = array.map(function(d) {
       return {
-        date: parseDate(d[1]),
-        requests: d[2]
+        date: parseDate(d.date),
+        requests: parseInt(d.hits, 10)
       };
     });
 

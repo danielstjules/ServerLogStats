@@ -268,10 +268,10 @@ function processOverlay(evt) {
   // chart showing requests over time, and a table for requesting hosts
   else {
     var sectionInfo = {
-      'requests' : {columnName : 'request', htmlTitle : 'Request' },
-      'pages'    : {columnName : 'request', htmlTitle : 'Page'    },
-      'ref'      : {columnName : 'ref',     htmlTitle : 'Referrer'},
-      'errors'   : {columnName : 'request', htmlTitle : 'Error'   }
+      'requests' : { columnName : 'request', htmlTitle : 'Request' },
+      'pages'    : { columnName : 'request', htmlTitle : 'Page' },
+      'ref'      : { columnName : 'referrer', htmlTitle : 'Referrer' },
+      'errors'   : { columnName : 'request', htmlTitle : 'Error' }
     };
 
     // Generate a list of the most common hosts, with a limit of 1000
