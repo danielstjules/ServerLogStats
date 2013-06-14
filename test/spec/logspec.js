@@ -98,7 +98,7 @@ describe('Log', function() {
       expect(traffic[0].hits).toEqual(hits);
     });
 
-    it('should be able to restrict entries to those that match an IP', function() {
+    it('can return only those that match a given property', function() {
       // Match against those with host 000.00.000.005
       // That is, Fixtures.expectedEntries[27] and Fixtures.expectedEntries[28]
       var host = '000.00.000.005';
@@ -112,6 +112,36 @@ describe('Log', function() {
 
       expect(traffic.length).toEqual(1);
       expect(traffic).toEqual(expected);
+    });
+  });
+
+  // Test parseHosts()
+  describe('parseHosts()', function() {
+    it('returns an array of hosts along with # of requests they made', function() {
+      var hosts = log.parseHosts(100);
+      // 00.000.000.00 should have 22 hits
+      expect(hosts[0][1]).toEqual(22);
+      expect(hosts.length).toEqual(7);
+    });
+
+    it('orders the hosts in descending order of hits', function() {
+      var hosts = log.parseHosts(100);
+      var requests = hosts[0][1];
+
+      for (var i = 1; i < hosts.length; i++) {
+        expect(hosts[i][1] <= requests).toBeTruthy();
+        requests = hosts[i][1];
+      }
+    });
+
+    it('can return only those that match a given property', function() {
+      var hosts = log.parseHosts(100, 'date', '13/Feb/2012');
+      var expected = [
+        ['000.00.000.005', 2],
+        ['00.000.000.004', 1]
+      ];
+      expect(hosts.length).toEqual(2);
+      expect(hosts).toEqual(expected);
     });
   });
 

@@ -200,7 +200,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out hosts that don't match our criteria
-      if (!column && !match && this.logTable[i][column] != match)
+      if (column && match && this.logTable[i][column] != match)
           continue;
 
       // Increment host frequency
