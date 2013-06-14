@@ -187,8 +187,9 @@ function Log(logFile) {
   };
 
   /**
-   * Builds the hostTable, in which each row corresponds to a host and its number 
-   * of requests. The table is n in size and is in descending order.
+   * Builds a sorted table, in which each row corresponds to a host and its number 
+   * of requests. The table is n in size and is in descending order of hits. If 
+   * column and match are provided, it'll filter rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
    * @param   column  The column of the log table to match against
@@ -215,21 +216,22 @@ function Log(logFile) {
 
   /**
    * Builds a sorted requests table, in which each row contains the request url and 
-   * the number of occurences. The table is N in size and is in descending order. 
-   * If host is given, then only matches those requests made by that host.
+   * the number of occurrences. The table is n in size and is in descending order
+   * of hits. If column and match are provided, it'll filter rows in logTable by 
+   * those values.
    *
-   * @param   n      Number of top rows to include
-   * @param   host   Host to filter requests by
-   * @return  array  Table with columns [host, hits]
+   * @param   n       Number of top rows to include
+   * @param   column  The column of the log table to match against
+   * @param   match   The string for which to check equality
+   * @return  array   Table with columns [request, hits]
    */
-  this.parseRequests = function(n, host) {
+  this.parseRequests = function(n, column, match) {
     var requests = {};
-    var match = true;
 
     for (var i = 0; i < this.logTable.length; i++) {
-      // filter out requests that don't match our host, if given
-      if (host && this.logTable[i]['host'] != host)
-        continue;
+      // filter out rows that don't match our criteria
+      if (column && match && this.logTable[i][column] != match)
+          continue;
 
       // Increment requests frequency
       if (!requests[this.logTable[i]['request']])
@@ -245,20 +247,21 @@ function Log(logFile) {
    * Builds a sorted page table, in which each row corresponds to a page and its 
    * number of requests. Each request is checked against a list of common media 
    * extensions to ensure that it's indeed a page. The table is n in size and in 
-   * descending order. If the host is given, then it only matches pages requested 
-   * by that host.
+   * descending order. If column and match are provided, it'll filter rows in 
+   * logTable by those values.
    *
-   * @param   n      Number of top rows to include
-   * @param   host   Host to filter pages by
-   * @return  array  Table with columns [page, hits]
+   * @param   n       Number of top rows to include
+   * @param   column  The column of the log table to match against
+   * @param   match   The string for which to check equality
+   * @return  array   Table with columns [page, hits]
    */
-  this.parsePages = function(n, host) {
+  this.parsePages = function(n, column, match) {
     // Helper for ignoring common media file extensions
     function isNotMedia(url) {
       extensions = [
         'jpg', 'jpeg', 'pdf', 'mp3', 'rar', 'exe', 'wmv',  'doc', 'avi', 'ppt',
         'mpg', 'mpeg', 'tif', 'wav', 'psd','txt', 'bmp',  'css', 'js',  'png',
-        'gif', 'swf',  'dmg', 'flv', 'gz'
+        'gif', 'swf',  'dmg', 'flv', 'gz', 'ico'
       ];
       for (var i = 0; i < extensions.length; i++) {
         if (url.indexOf('.' + extensions[i]) != -1)
@@ -268,18 +271,31 @@ function Log(logFile) {
     }
 
     var pages = {};
+    var query;
+    var fragment;
 
     for (var i = 0; i < this.logTable.length; i++) {
-      // filter out requests that don't match our host, if given
-      if (host && this.logTable[i]['host'] != host)
-        continue;
+      // filter out rows that don't match our criteria
+      if (column && match && this.logTable[i][column] != match)
+          continue;
 
       if (isNotMedia(this.logTable[i]['request'])) {
-        // Increment requests frequency
-        if (!pages[this.logTable[i]['request']])
-          pages[this.logTable[i]['request']] = 1;
+        page = this.logTable[i]['request'];
+
+        // Remove the query from the URI if present
+        query = page.indexOf('?');
+        if (query != -1)
+          page = page.substring(0, query);
+
+        // Remove the fragment from the URI if present
+        fragment = page.indexOf('?');
+        if (fragment != -1)
+          page = page.substring(0, fragment);
+
+        if (!pages[page])
+          pages[page] = 1;
         else
-          pages[this.logTable[i]['request']]++;
+          pages[page]++;
       }
     }
 
@@ -295,7 +311,7 @@ function Log(logFile) {
    * size and is in descending order. Ignores blank http referrers.
    *
    * @param   n      Number of top rows to include
-   * @return  array  Table with columns [ref, hits]
+   * @return  array  Table with columns [referrer, hits]
    */
   this.parseReferrers = function(n) {
     var referrers = {};
@@ -344,7 +360,7 @@ function Log(logFile) {
    * and is in descending order.
    *
    * @param   n      Number of top rows to include
-   * @return  array  Table with columns [ref, hits]
+   * @return  array  Table with columns [referrer, hits]
    */
   this.parseRefDomains = function(n) {
     var refDomains = {};

@@ -244,12 +244,12 @@ function processOverlay(evt) {
 
     // Generate a list of the most common requests by that host
     var topRequests = '<div class="table left">' +
-      buildTableHtml(log.parseRequests(1000, query), 'Request', 'Hits') +
+      buildTableHtml(log.parseRequests(1000, 'host', query), 'Request', 'Hits') +
       '</div>';
 
     // Generate a list of the most common pages requested by that host
     var topPages = '<div class="table right">' +
-      buildTableHtml(log.parsePages(1000, query), 'Page', 'Hits') +
+      buildTableHtml(log.parsePages(1000, 'host', query), 'Page', 'Hits') +
       '</div>';
 
     // Add the the tables to the popup

@@ -78,7 +78,7 @@ describe('Log', function() {
     it('returns bandwidth in MB', function() {
       var bandwidth = 0;
       for (var i = 0; i < Fixtures.expectedEntries.length; i++) {
-        if (Fixtures.expectedEntries[i].date == "11/Feb/2012")
+        if (Fixtures.expectedEntries[i].date == '11/Feb/2012')
           bandwidth += parseInt(Fixtures.expectedEntries[i].bytes, 10);
       }
       var bandwidthInMB = ((bandwidth) / (1024 * 1024)).toFixed(2);
@@ -90,7 +90,7 @@ describe('Log', function() {
     it('counts each request as a hit for that day', function() {
       var hits = 0;
       for (var i = 0; i < Fixtures.expectedEntries.length; i++) {
-        if (Fixtures.expectedEntries[i].date == "11/Feb/2012")
+        if (Fixtures.expectedEntries[i].date == '11/Feb/2012')
           hits += 1;
       }
 
@@ -142,6 +142,75 @@ describe('Log', function() {
       ];
       expect(hosts.length).toEqual(2);
       expect(hosts).toEqual(expected);
+    });
+  });
+
+  // Test parseRequests
+  describe('parseRequests()', function() {
+    it('returns an array of requests along with # of hits', function() {
+      var requests = log.parseRequests(100);
+      // /robots.txt should have 5 hits
+      expect(requests[0][1]).toEqual(5);
+      expect(requests.length).toEqual(24);
+    });
+
+    it('orders the requests in descending order of hits', function() {
+      var requests = log.parseRequests(100);
+      var hits = requests[0][1];
+
+      for (var i = 1; i < requests.length; i++) {
+        expect(requests[i][1] <= hits).toBeTruthy();
+        hits = requests[i][1];
+      }
+    });
+
+    it('can return only those that match a given property', function() {
+      var requests = log.parseRequests(100, 'date', '13/Feb/2012');
+      var expected = [
+        ['/robots.txt', 2],
+        ['/', 1]
+      ];
+      expect(requests.length).toEqual(2);
+      expect(requests).toEqual(expected);
+    });
+  });
+
+  // Test parsePages
+  describe('parsePages()', function() {
+    it('ignores common media file extensions', function() {
+      var pages = log.parsePages(100);
+      // Only '/' and '/test.html' should be considered a page in Fixtures. All 
+      // others are images, style sheets, or text files
+      expect(pages.length).toEqual(2);
+    });
+
+    it('ignores queries and fragments in the URI', function() {
+      var pages = log.parsePages(100);
+      // '/test.html?order_by=name#downloads' should become '/test.html'
+      expect(pages[1][0]).toEqual('/test.html');
+    });
+
+    it('returns an array of pages along with # of hits', function() {
+      // '/'' has 3 hits
+      var pages = log.parsePages(100);
+      expect(pages[0][1]).toEqual(3);
+    });
+
+    it('orders the pages in descending order of hits', function() {
+      var pages = log.parsePages(100);
+      var hits = pages[0][1];
+
+      for (var i = 1; i < pages.length; i++) {
+        expect(pages[i][1] <= hits).toBeTruthy();
+        hits = pages[i][1];
+      }
+    });
+
+    it('can return only those that match a given property', function() {
+      var pages = log.parsePages(100, 'date', '13/Feb/2012');
+      var expected = [['/', 1]];
+      expect(pages.length).toEqual(1);
+      expect(pages).toEqual(expected);
     });
   });
 
