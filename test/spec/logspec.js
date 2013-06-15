@@ -27,6 +27,30 @@ describe('Log', function() {
     });
   });
 
+  // Test isValid()
+  describe('isValid()', function() {
+    it('returns true if the first line is in Combined Log Format', function() {
+      var line = '00.000.000.00 - user [11/Feb/2012:15:10:46 -0500] "GET / ' +
+        'HTTP/1.1" 200 1588 "http://localhost" "Mozilla/4.0"\n';
+      log = new Log(line);
+      expect(log.isValid()).toBe(true);
+    });
+
+    it('returns true if the first line is in Common Log Format', function() {
+      var line = '00.000.000.00 test - [11/Feb/2012:15:10:46 -0500] "GET / ' +
+        'HTTP/1.1" 200 1588\n';
+      log = new Log(line);
+      expect(log.isValid()).toBe(true);
+    });
+
+    it('returns false if the first line is in neither format', function() {
+      var line = '00.000.000.00 test - [11/Feb/2012:15:10:46 -0500] "GET / ' +
+        'HTTP/1.1" 200 1588 ""\n';
+      log = new Log(line);
+      expect(log.isValid()).toBe(false);
+    });
+  });
+
   // Test parse()
   describe('parse()', function() {
     it('should ignore blank lines', function() {

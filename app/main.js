@@ -70,18 +70,18 @@ function handleFileSelect(evt) {
 
   reader.onloadend = function(evt) {
     if (evt.target.readyState == FileReader.DONE) {
+      log = new Log(evt.target.result);
+
       // Only read if log file looks valid, otherwise return and refresh
-      if (!isValidLogInput(evt.target.result.slice(0, 1000))) {
+      if (!log.isValid()) {
         $('#uploadbox').append('<br /><br />Error: File input not a valid log. ' +
           'This page will refresh automatically in 4 seconds');
         setTimeout('location.reload(true);',4000);
         return;
       }
 
-      // The log file
-      log = new Log(evt.target.result);
+      // Parse the log and update the page
       log.parse();
-
       setupPage();
 
       // Done - let's show how long that took
@@ -95,24 +95,6 @@ function handleFileSelect(evt) {
   reader.readAsText(file);
 
   return false;
-}
-
-/**
- * Uses regex to try to match the first couple lines of the log file. If it 
- * does, then we say it's a valid log in Common Log Format.
- *
- * @param   logSegment  Sample of the log file
- * @return  boolean     True if its valid, false otherwise
- */
-function isValidLogInput(logSegment) {
-  // We check the second in case the first one got cut from trimming
-  logSegment = logSegment.split(/[\r\n|\n]+/);
-  var regExp = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]*" \d+ \d+ "[^"]*" "[^"]*"/m;
-
-  if (logSegment[0].search(regExp) == -1 && logSegment[1].search(regExp) == -1)
-    return false;
-
-  return true;
 }
 
 /**

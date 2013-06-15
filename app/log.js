@@ -32,6 +32,28 @@ function Log(logFile) {
   };
 
   /**
+   * Uses regex to determine whether or not the first line of the file is in 
+   * Common or Combined Log format. If so, returns true. Otherwise false.
+   *
+   * @return  boolean  True if its valid, false otherwise
+   */
+  this.isValid = function() {
+    logSegment = logFile.slice(0, 1000);
+    logSegment = logSegment.split(/[\r\n|\n]+/);
+
+    // Regex to match against Combined Log Format
+    var combined = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]+" \d+ \d+ "[^"]*" "[^"]*"$/;
+
+    // Regex to match against Common Log Format
+    var common = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]+" \d+ \d+$/;
+
+    if (logSegment[0].search(combined) == -1 && logSegment[0].search(common) == -1)
+      return false;
+
+    return true;
+  };
+
+  /**
    * Pushes the key/val pairs from a hash into an array and sorts it by its value. 
    * It then trims the results to be less than or equal to n in size.
    *
