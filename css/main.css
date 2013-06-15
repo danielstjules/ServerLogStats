@@ -193,7 +193,7 @@ input {
     z-index: 10;
 }
 
-#popup {
+#modal {
     width: 760px;
     background-color: #3b3c3d;
     padding: 20px;
@@ -201,22 +201,22 @@ input {
     margin: 20px auto 0 auto;
 }
 
-#popup .table {
+#modal .table {
     max-height: 214px;
     height: auto;
 }
 
-#popup .table td {
+#modal .table td {
     cursor: auto;
 }
 
-#popup #close {
+#modal #close {
     float: right;
     text-align: right;
     cursor: pointer;
 }
 
-#popup a:hover {
+#modal a:hover {
     border-bottom: 1px #3b3c3d solid;
 }
 

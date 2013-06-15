@@ -204,58 +204,38 @@ function setupPage() {
  * @param  evt  The click event that triggered the listener
  */
 function processOverlay(evt) {
-  // Dim the screen and disable the scrollbar
-  var body = $('body');
-  var overlay = $('<div />', { id: 'overlay' });
-  body.css('overflow', 'hidden');
-  body.append(overlay);
-
-  // Generate the popup and append it to the overlay
-  var popup = $('<div />', { id: 'popup' });
-  overlay.append(popup);
-
   var query = this.getElementsByTagName('td')[1].innerHTML;
-
-  // Get the table partial for building tables
-  var source = $("#table-partial").html();
-  var template = Handlebars.compile(source);
 
   // Get section id, ie: <div id="hosts" class="section">
   var section = $(this).closest('.section').attr('id');
 
-  // Render data for hosts, including: User Agent, Top Requests, and Top Pages
-  if (section == 'hosts') {
-    // In this case, query is the host
-    var userAgent = log.getUserAgent(query);
+  // TODO: Figure out what information we'd like to display for a ref domain
+  if (section == 'refdomains')
+    return;
 
+  // Dim the screen and disable the scrollbar
+  var body = $('body');
+  body.css('overflow', 'hidden');
+
+  var source = $("#modal-template").html();
+  var template = Handlebars.compile(source);
+
+  // For hosts, display userAgent and requests
+  if (section == 'hosts') {
     // Generate a list of the most common requests by that host
     var requestsTable = {
       'colOne': 'Request',
       'colTwo': 'Hits',
-      'rows': formatTableRows(log.parseRequests(1000, 'host', query))
+      'rows': formatTableRows(log.parseRequests(1000, 'host', query)),
+      'query': query,
+      'title': 'Host',
+      'extraTitle': 'User Agent',
+      'extraInfo': log.getUserAgent(query)
     };
 
-    var topRequests = '<div class="table left">' + template(requestsTable) + '</div>';
-
-    // Generate a list of the most common pages by that host
-    var pagesTable = {
-      'colOne': 'Page',
-      'colTwo': 'Hits',
-      'rows': formatTableRows(log.parsePages(1000, 'host', query))
-    };
-
-    var topPages = '<div class="table right">' + template(pagesTable) + '</div>';
-
-    // Add the the tables to the popup
-    popup.html('<p><strong>Host:</strong> ' + query + '</p>' +
-               '<p><strong>User Agent:</strong> ' + userAgent + '</p>' +
-               topRequests + topPages + '<div class="cl"></div>');
-  }
-
-  // TODO: Figure out what information we'd like to display for a ref domain. 
-  // IE: Page Rank, most common referring pages, traffic from that website, etc
-  else if (section == 'refdomains') {
-    popup.html('Coming Soon');
+    // Add modal, then draw line chart
+    body.append(template(requestsTable));
+    Charts.drawLineChart('#modal', log.parseTraffic('host', query));
   }
 
   // Render data for all other sections. So far, this includes a single line 
@@ -269,25 +249,21 @@ function processOverlay(evt) {
     };
 
     // Generate a list of the most common hosts, with a limit of 1000
-    var hosts = log.parseHosts(1000, sectionInfo[section]['columnName'], query);
+    var column = sectionInfo[section]['columnName'];
+    var hosts = log.parseHosts(1000, column, query);
     var hostsTable = {
       'colOne': 'Host',
       'colTwo': 'Hits',
-      'rows': formatTableRows(hosts)
+      'rows': formatTableRows(hosts),
+      'query': query,
+      'title': sectionInfo[section]['htmlTitle']
     };
 
-    var topHosts = '<div class="table right">' + template(hostsTable) + '</div>';
-
-    // Add the table and line chart to the popup
-    popup.html('<p><strong>' + sectionInfo[section]['htmlTitle'] +
-      ':</strong> ' + query + '</p>' + topHosts);
-
-    Charts.drawLineChart('#popup',
-      log.parseTraffic(sectionInfo[section]['columnName'], query));
+    // Add modal, then draw line chart
+    body.append(template(hostsTable));
+    Charts.drawLineChart('#modal', log.parseTraffic(column, query));
   }
 
-  // Append a close link and add the corresponding event listener
-  popup.append('<br /><a id="close">Click to Close</a><div class="cl"></div>');
   $('#close').on('click', removeOverlay);
 
   return false;

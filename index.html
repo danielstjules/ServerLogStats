@@ -44,6 +44,22 @@
     </div>
   </script>
 
+  <script id="modal-template" type="text/x-handlebars-template">
+    <div id="overlay">
+      <div id="modal">
+        <p class="right"><a id="close">Click to Close</a></p>
+        <p><strong>{{title}}</strong>: {{query}}</p>
+        {{#if extraTitle}}
+          <p><strong>{{extraTitle}}</strong>: {{extraInfo}}</p>
+        {{/if}}
+        <div class="cl"></div>
+        <div class="table right">
+          {{> table}}
+        </div>
+      </div>
+    </div>
+  </script>
+
   <script id="table-partial" type="text/x-handlebars-template">
     <table>
       <tr>
