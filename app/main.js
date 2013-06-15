@@ -2,7 +2,7 @@
  * Only accepts default Apache/Nginx access log format:
  * http://httpd.apache.org/docs/2.2/logs.html#common
  * Requires that /app/charts.js and /app/log.js be loaded
- * Uses Zepto.js and d3.js
+ * Uses Zepto.js, Handlebars.js, and d3.js
  */
 
 var log;
@@ -116,23 +116,20 @@ function isValidLogInput(logSegment) {
 }
 
 /**
- * Returns the hits of the first 10 elements of a sorted array.
+ * Creates an array of objects from a two dimensional array, for use with 
+ * Handlebars. Adds the rank to each row.
  *
- * @param   array  The sorted array to extract the values from
- * @return  array  Contains the hits of the first ten rows of the sorted array
+ * @param   array  Two dimensional array to format
+ * @return  array  An array of objects with properties: rank, name and value
  */
-function getTopTenValues(array) {
-  // Extract top 10 values for bar graphs from sorted data
-  var x = 10;
-  if (array.length < 10)
-    x = array.length;
-
-  var topTen = [];
-  for (var i = 0; i < x; i++) {
-    topTen[i] = array[i][1];
+function formatTableRows(array) {
+  var rows = [];
+  for (i = 0; i < array.length; i++) {
+    var row = array[i];
+    rows.push({ 'rank': i + 1, 'name': row[0], 'value': row[1] });
   }
 
-  return topTen;
+  return rows;
 }
 
 /**
@@ -142,34 +139,52 @@ function setupPage() {
   var div;
   var tableHtml;
 
+  var source = $("#section-template").html();
+  var template = Handlebars.compile(source);
+
   // Add the traffic line chart
   $('#traffic').css('display', 'block');
   Charts.drawTrafficLineChart('#traffic', log.traffic);
 
   // Next all the barcharts and tables
   // Format: div id, table var, second column head, third column head
-  var barChartInfo = [
+  var sectionInfo = [
     ['hosts',       log.hosts,       'Host',      'Hits'],
     ['requests',    log.requests,    'Request',   'Hits'],
     ['pages',       log.pages,       'Page',      'Hits'],
     ['ref',         log.referrers,   'Referrer',  'Hits'],
     ['refdomains',  log.refDomains,  'Domain',    'Hits'],
-    ['errors',      log.errors,      'Request',   'Hits']
+    ['errors',      log.errors,      'Errors',    'Hits']
   ];
 
   // Loop through each barChartInfo element
   // and display the div, build the bar chart, and the table
-  for (var i = 0; i < barChartInfo.length; i++) {
-    div = $('#' + barChartInfo[i][0]);
+  for (var i = 0; i < sectionInfo.length; i++) {
+    var j;
+
+    var section = {
+      'id': sectionInfo[i][0],
+      'sectionName': sectionInfo[i][2] + 's',
+      'colOne': sectionInfo[i][2],
+      'colTwo': sectionInfo[i][3],
+      'rows': formatTableRows(sectionInfo[i][1])
+    };
+
+    var html = template(section);
+    $('#content').append(html);
+
+    // Get top ten values, add the bar chart
+    divID = '#' + sectionInfo[i][0];
+    var topTen = sectionInfo[i][1].slice(0,10);
+    for (j = 0; j < topTen.length; j++) {
+      topTen[j] = topTen[j][1];
+    }
+
+    Charts.drawBarChart(divID, topTen);
+
+    // Display the section
+    div = $(divID);
     div.css('display', 'block');
-
-    tableHtml = buildTableHtml(barChartInfo[i][1], barChartInfo[i][2],
-        barChartInfo[i][3]);
-
-    div.find('.container')[0].getElementsByClassName('table')[0].innerHTML = tableHtml;
-
-    Charts.drawBarChart('#' + barChartInfo[i][0],
-      getTopTenValues(barChartInfo[i][1]));
 
     // Get list of table rows to add event listeners to
     var links = div.find('.container')[0]
@@ -177,37 +192,10 @@ function setupPage() {
                    .getElementsByTagName('tr');
 
     // Add event listeners, but skip the row containing the table head
-    for (var j = 1; j < links.length; j++) {
+    for (j = 1; j < links.length; j++) {
       $(links[j]).on('click', processOverlay);
     }
   }
-}
-
-/**
- * Creates a string with the necessary HTML to present the tables that we 
- * generated containing the top N results.
- *
- * @param   array   The sorted array to extract the values from
- * @param   colOne  Table heading for keys
- * @param   colTwo  Table heading for the values
- * @return  string  The table's HTML
- */
-function buildTableHtml(array, colOne, colTwo) {
-  var tableHtml = '<table><tr><th class="rank">Rank</th>' +
-                  '<th class="colone">' + colOne + '</th>' +
-                  '<th class="coltwo">' + colTwo + '</th></tr>';
-
-  for (var i = 0; i < array.length; i++) {
-    var rank = i + 1;
-    tableHtml += '<tr><td>' + rank + '</td>' +
-                 '<td>' + array[i][0] + '</td>' +
-                 '<td>' + array[i][1] + '</td>' +
-                 '</tr>\n';
-  }
-
-  tableHtml += '</table>';
-
-  return tableHtml;
 }
 
 /**
@@ -228,6 +216,10 @@ function processOverlay(evt) {
 
   var query = this.getElementsByTagName('td')[1].innerHTML;
 
+  // Get the table partial for building tables
+  var source = $("#table-partial").html();
+  var template = Handlebars.compile(source);
+
   // Get section id, ie: <div id="hosts" class="section">
   var section = $(this).closest('.section').attr('id');
 
@@ -237,14 +229,22 @@ function processOverlay(evt) {
     var userAgent = log.getUserAgent(query);
 
     // Generate a list of the most common requests by that host
-    var topRequests = '<div class="table left">' +
-      buildTableHtml(log.parseRequests(1000, 'host', query), 'Request', 'Hits') +
-      '</div>';
+    var requestsTable = {
+      'colOne': 'Request',
+      'colTwo': 'Hits',
+      'rows': formatTableRows(log.parseRequests(1000, 'host', query))
+    };
 
-    // Generate a list of the most common pages requested by that host
-    var topPages = '<div class="table right">' +
-      buildTableHtml(log.parsePages(1000, 'host', query), 'Page', 'Hits') +
-      '</div>';
+    var topRequests = '<div class="table left">' + template(requestsTable) + '</div>';
+
+    // Generate a list of the most common pages by that host
+    var pagesTable = {
+      'colOne': 'Page',
+      'colTwo': 'Hits',
+      'rows': formatTableRows(log.parsePages(1000, 'host', query))
+    };
+
+    var topPages = '<div class="table right">' + template(pagesTable) + '</div>';
 
     // Add the the tables to the popup
     popup.html('<p><strong>Host:</strong> ' + query + '</p>' +
@@ -269,11 +269,14 @@ function processOverlay(evt) {
     };
 
     // Generate a list of the most common hosts, with a limit of 1000
-    var filteredHostsTable = log.parseHosts( 1000,
-      sectionInfo[section]['columnName'], query);
+    var hosts = log.parseHosts(1000, sectionInfo[section]['columnName'], query);
+    var hostsTable = {
+      'colOne': 'Host',
+      'colTwo': 'Hits',
+      'rows': formatTableRows(hosts)
+    };
 
-    var topHosts = '<div class="table right">' +
-      buildTableHtml(filteredHostsTable, 'Host', 'Hits') + '</div>';
+    var topHosts = '<div class="table right">' + template(hostsTable) + '</div>';
 
     // Add the table and line chart to the popup
     popup.html('<p><strong>' + sectionInfo[section]['htmlTitle'] +
@@ -302,6 +305,9 @@ function removeOverlay(evt) {
 
   return false;
 }
+
+// Register the table partial
+Handlebars.registerPartial("table", $("#table-partial").html());
 
 // Add the listeners
 var uploadBox = $('#uploadbox');

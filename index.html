@@ -32,65 +32,48 @@
     to browse your computer for the file. <input type="file" id="fileinput" name="fileinput" />
   </div>
 
+  <script id="section-template" type="text/x-handlebars-template">
+    <div id="{{id}}" class="section">
+      <div class="container">
+        <strong>Top 100 {{sectionName}}</strong>
+        <div class="table">
+          {{> table}}
+        </div>
+      </div>
+      <strong>Top 10 {{sectionName}}</strong>
+    </div>
+  </script>
+
+  <script id="table-partial" type="text/x-handlebars-template">
+    <table>
+      <tr>
+        <th class="rank">Rank</th>
+        <th class="colone">{{colOne}}</th>
+        <th class="coltwo">{{colTwo}}</th>
+      </tr>
+      {{#each rows}}
+        <tr>
+          <td>{{rank}}</td>
+          <td>{{name}}</td>
+          <td>{{value}}</td>
+        </tr>
+      {{/each}}
+    </table>
+  </script>
+
   <div id="traffic">
   </div>
+</div>
 
-  <div id="hosts" class="section">
-    <div class="container">
-      <strong>Top 100 Hosts</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 Hosts</strong>
-  </div>
-
-  <div id="requests" class="section">
-    <div class="container">
-      <strong>Top 100 Requests</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 Requests</strong>
-  </div>
-
-  <div id="pages" class="section">
-    <div class="container">
-      <strong>Top 100 Pages</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 Pages</strong>
-  </div>
-
-  <div id="ref" class="section">
-    <div class="container">
-      <strong>Top 100 Referring Pages</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 Referring Pages</strong>
-  </div>
-
-  <div id="refdomains" class="section">
-    <div class="container">
-      <strong>Top 100 Referring Domains</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 Referring Domains</strong>
-  </div>
-
-  <div id="errors" class="section">
-    <div class="container">
-      <strong>Top 100 404s</strong>
-      <div class="table"></div>
-    </div>
-    <strong>Top 10 404s</strong>
-  </div>
-
-  <div id="footer">
-    <p>Maximum recommended log upload size: 200MB</p>
-    <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
-  </div>
+<div id="footer">
+  <p>Maximum recommended log upload size: 200MB</p>
+  <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
 </div>
 
 <script type="text/javascript" src="lib/d3.v3.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="lib/zepto.min.js"></script>
+<script type="text/javascript" src="lib/handlebars.min.js" charset="utf-8"></script>
+
 <script type="text/javascript" src="app/charts.js"></script>
 <script type="text/javascript" src="app/log.js"></script>
 <script type="text/javascript" src="app/main.js"></script>
