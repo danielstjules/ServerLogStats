@@ -17,6 +17,21 @@ function Log(logFile) {
   this.refDomains  = [];
 
   /**
+   * Returns the User Agent of the given host. It searches for the first result 
+   * of that host in the logs, and uses that entry's User Agent - thus ignoring 
+   * any subsequent changes.
+   *
+   * @param   host     The host to search the table for
+   * @return  string   That host's User Agent
+   */
+  this.getUserAgent = function(host) {
+    for (var i = 0; i < this.logTable.length; i++) {
+      if (this.logTable[i]['host'] == host && this.logTable[i]['userAgent'])
+        return this.logTable[i]['userAgent'];
+    }
+  };
+
+  /**
    * Pushes the key/val pairs from a hash into an array and sorts it by its value. 
    * It then trims the results to be less than or equal to n in size.
    *

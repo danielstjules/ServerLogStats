@@ -20,20 +20,24 @@ describe('Log', function() {
     expect(log.parseRefDomains).toBeDefined();
   });
 
+  // Test getUserAgent()
+  describe('getUserAgent()', function() {
+    it('returns the first occurrence of user agent for the host', function() {
+      expect(log.getUserAgent('00.000.000.00')).toEqual('Mozilla/4.0');
+    });
+  });
+
   // Test parse()
   describe('parse()', function() {
     it('should ignore blank lines', function() {
-      log.parse();
       expect(log.logTable.length).toEqual(Fixtures.expectedEntries.length);
     });
 
     it('creates the expected logTable', function() {
-      log.parse();
       expect(log.logTable).toEqual(Fixtures.expectedEntries);
     });
 
     it('fills the parsed log attributes', function() {
-      log.parse();
       expect(log.hosts.length).toBeGreaterThan(0);
       expect(log.requests.length).toBeGreaterThan(0);
       expect(log.pages.length).toBeGreaterThan(0);
@@ -44,7 +48,6 @@ describe('Log', function() {
     });
 
     it('calls the various parse functions to fill those attributes', function() {
-      log.parse();
       expect(log.hosts).toEqual(log.parseHosts(100));
       expect(log.requests).toEqual(log.parseRequests(100));
       expect(log.pages).toEqual(log.parsePages(100));

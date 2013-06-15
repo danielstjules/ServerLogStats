@@ -233,14 +233,8 @@ function processOverlay(evt) {
 
   // Render data for hosts, including: User Agent, Top Requests, and Top Pages
   if (section == 'hosts') {
-    // Use the first occurrence of user-agent (ignore changes)
-    var userAgent = '';
-    for (var i = 0; i < log.logTable.length; i++) {
-      if (log.logTable[i]['host'] == query && log.logTable[i]['userAgent']) {
-        userAgent = log.logTable[i]['userAgent'];
-        break;
-      }
-    }
+    // In this case, query is the host
+    var userAgent = log.getUserAgent(query);
 
     // Generate a list of the most common requests by that host
     var topRequests = '<div class="table left">' +

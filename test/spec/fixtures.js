@@ -11,7 +11,7 @@ var Fixtures = function() {
   var logFile =
     '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET / HTTP/1.1" 200 1588 "http://localhost" "Mozilla/4.0"\n' +
     '\n'+
-    '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET /assets/style.css HTTP/1.1" 200 2041 "http://localhost" "Mozilla/4.0"\n' +
+    '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET /assets/style.css HTTP/1.1" 200 2041 "http://localhost" "Mozilla/4.2"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:46 -0500] "GET /js/jquery-1.3.2.min.js HTTP/1.1" 200 57254 "http://localhost" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/twitter.jpg HTTP/1.1" 200 2279 "http://localhost" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/contact.jpg HTTP/1.1" 200 2773 "http://localhost/" "Mozilla/4.0"\n' +
@@ -45,7 +45,7 @@ var Fixtures = function() {
   // Here's how we expect the log to be parsed as
   expectedEntries = [
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/", "status":"200", "bytes":"1588", "referrer":"http://localhost", "userAgent":"Mozilla/4.0" },
-    { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/style.css", "status":"200", "bytes":"2041", "referrer":"http://localhost", "userAgent":"Mozilla/4.0" },
+    { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/style.css", "status":"200", "bytes":"2041", "referrer":"http://localhost", "userAgent":"Mozilla/4.2" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/js/jquery-1.3.2.min.js", "status":"200", "bytes":"57254", "referrer":"http://localhost", "userAgent":"Mozilla/4.0" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/twitter.jpg", "status":"200", "bytes":"2279", "referrer":"http://localhost", "userAgent":"Mozilla/4.0" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/contact.jpg", "status":"200", "bytes":"2773", "referrer":"http://localhost/", "userAgent":"Mozilla/4.0" },
