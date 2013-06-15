@@ -215,8 +215,8 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted requests table, in which each row contains the request url and 
-   * the number of occurrences. The table is n in size and is in descending order
+   * Builds a sorted table, in which each row contains the request url and the 
+   * number of occurrences. The table is n in size and is in descending order
    * of hits. If column and match are provided, it'll filter rows in logTable by 
    * those values.
    *
@@ -244,11 +244,12 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted page table, in which each row corresponds to a page and its 
-   * number of requests. Each request is checked against a list of common media 
-   * extensions to ensure that it's indeed a page. The table is n in size and in 
-   * descending order. If column and match are provided, it'll filter rows in 
-   * logTable by those values.
+   * Builds a sorted table, in which each row corresponds to a page and its 
+   * number of hits. Each request is checked against a list of common media 
+   * extensions to ensure that it's indeed a page. The query and fragment 
+   * portions of the URI are also ignored if present. The table is n in size and 
+   * in descending order of hits. If column and match are provided, it'll filter 
+   * rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
    * @param   column  The column of the log table to match against
@@ -306,17 +307,24 @@ function Log(logFile) {
 
 
   /**
-   * Builds a sorted ref table, in which each row corresponds to an http referrer 
+   * Builds a sorted table, in which each row corresponds to an http referrer 
    * and the number of requests originating from that location. The table is n in 
-   * size and is in descending order. Ignores blank http referrers.
+   * size and is in descending order of hits. If column and match are provided, 
+   * it'll filter rows in logTable by those values.
    *
-   * @param   n      Number of top rows to include
-   * @return  array  Table with columns [referrer, hits]
+   * @param   n       Number of top rows to include
+   * @param   column  The column of the log table to match against
+   * @param   match   The string for which to check equality
+   * @return  array   Table with columns [referrer, hits]
    */
-  this.parseReferrers = function(n) {
+  this.parseReferrers = function(n, column, match) {
     var referrers = {};
 
     for (var i = 0; i < this.logTable.length; i++) {
+      // filter out rows that don't match our criteria
+      if (column && match && this.logTable[i][column] != match)
+          continue;
+
       // Increment ref frequency
       if (!referrers[this.logTable[i]['referrer']])
         referrers[this.logTable[i]['referrer']] = 1;
@@ -332,48 +340,36 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted error table, in which each row corresponds to a 404 and its 
-   * number of requests. The table is n in size and is in descending order.
-   *
-   * @param   n      Number of top rows to include
-   * @return  array  Table with columns [request, hits]
-   */
-  this.parseErrors = function(n) {
-    var errors = {};
-
-    for (var i = 0; i < this.logTable.length; i++) {
-      // Increment error frequency
-      if (this.logTable[i]['status'] ==  '404') {
-        if (!errors[this.logTable[i]['request']])
-          errors[this.logTable[i]['request']] = 1;
-        else
-          errors[this.logTable[i]['request']]++;
-      }
-    }
-
-    return getTopNFromHash(errors, n);
-  };
-
-  /**
    * Builds the referring domains table, in which each row corresponds to an 
    * external referring domain and its number of requests. The table is N in size 
-   * and is in descending order.
+   * and is in descending order. If column and match are provided, it'll filter 
+   * rows in logTable by those values.
    *
    * @param   n      Number of top rows to include
+   * @param   column  The column of the log table to match against
+   * @param   match   The string for which to check equality
    * @return  array  Table with columns [referrer, hits]
    */
-  this.parseRefDomains = function(n) {
+  this.parseRefDomains = function(n, column, match) {
     var refDomains = {};
 
     for (var i = 0; i < this.logTable.length; i++) {
+      // filter out rows that don't match our criteria
+      if (column && match && this.logTable[i][column] != match)
+          continue;
+
       var refDomain = this.logTable[i]['referrer'];
 
       refDomain = refDomain.replace('http://',  '');
       refDomain = refDomain.replace('https://', '');
       refDomain = refDomain.replace('www.',     '');
 
-      var endPos = refDomain.indexOf('/');
-      refDomain = refDomain.substring(0, endPos).toLowerCase();
+      // remove everything after the authority
+      var slash = refDomain.indexOf('/');
+      if (slash != -1)
+        refDomain = refDomain.substring(0, slash);
+
+      refDomain = refDomain.toLowerCase();
 
       // Increment ref domain frequency
       if (!refDomains[refDomain])
@@ -389,6 +385,37 @@ function Log(logFile) {
     var outputTable = getTopNFromHash(refDomains, n);
 
     return outputTable;
+  };
+
+  /**
+   * Builds a sorted table, in which each row corresponds to a 404 and its 
+   * number of requests. The table is n in size and is in descending order of 
+   * hits. If column and match are provided, it'll filter rows in logTable by 
+   * those values.
+   *
+   * @param   n       Number of top rows to include
+   * @param   column  The column of the log table to match against
+   * @param   match   The string for which to check equality
+   * @return  array   Table with columns [request, hits]
+   */
+  this.parseErrors = function(n, column, match) {
+    var errors = {};
+
+    for (var i = 0; i < this.logTable.length; i++) {
+      // filter out rows that don't match our criteria
+      if (column && match && this.logTable[i][column] != match)
+          continue;
+
+      // Increment error frequency
+      if (this.logTable[i]['status'] ==  '404') {
+        if (!errors[this.logTable[i]['request']])
+          errors[this.logTable[i]['request']] = 1;
+        else
+          errors[this.logTable[i]['request']]++;
+      }
+    }
+
+    return getTopNFromHash(errors, n);
   };
 
 }

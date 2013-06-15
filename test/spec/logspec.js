@@ -126,12 +126,7 @@ describe('Log', function() {
 
     it('orders the hosts in descending order of hits', function() {
       var hosts = log.parseHosts(100);
-      var requests = hosts[0][1];
-
-      for (var i = 1; i < hosts.length; i++) {
-        expect(hosts[i][1] <= requests).toBeTruthy();
-        requests = hosts[i][1];
-      }
+      expect(hosts).toBeInDescOrder();
     });
 
     it('can return only those that match a given property', function() {
@@ -145,23 +140,18 @@ describe('Log', function() {
     });
   });
 
-  // Test parseRequests
+  // Test parseRequests()
   describe('parseRequests()', function() {
     it('returns an array of requests along with # of hits', function() {
       var requests = log.parseRequests(100);
       // /robots.txt should have 5 hits
       expect(requests[0][1]).toEqual(5);
-      expect(requests.length).toEqual(24);
+      expect(requests.length).toEqual(25);
     });
 
     it('orders the requests in descending order of hits', function() {
       var requests = log.parseRequests(100);
-      var hits = requests[0][1];
-
-      for (var i = 1; i < requests.length; i++) {
-        expect(requests[i][1] <= hits).toBeTruthy();
-        hits = requests[i][1];
-      }
+      expect(requests).toBeInDescOrder();
     });
 
     it('can return only those that match a given property', function() {
@@ -175,7 +165,7 @@ describe('Log', function() {
     });
   });
 
-  // Test parsePages
+  // Test parsePages()
   describe('parsePages()', function() {
     it('ignores common media file extensions', function() {
       var pages = log.parsePages(100);
@@ -198,12 +188,7 @@ describe('Log', function() {
 
     it('orders the pages in descending order of hits', function() {
       var pages = log.parsePages(100);
-      var hits = pages[0][1];
-
-      for (var i = 1; i < pages.length; i++) {
-        expect(pages[i][1] <= hits).toBeTruthy();
-        hits = pages[i][1];
-      }
+      expect(pages).toBeInDescOrder();
     });
 
     it('can return only those that match a given property', function() {
@@ -211,6 +196,102 @@ describe('Log', function() {
       var expected = [['/', 1]];
       expect(pages.length).toEqual(1);
       expect(pages).toEqual(expected);
+    });
+  });
+
+  // Test parseReferrers()
+  describe('parseReferrers()', function() {
+    it('is sensitive to the presence of a trailing slash in the URI', function() {
+      // We differentiate between http://localhost/ and http://localhost
+      var referrers = log.parseReferrers(100);
+      expect(referrers).toContain(['http://localhost/', 16]);
+      expect(referrers).toContain(['http://localhost', 4]);
+    });
+
+    it('returns an array of referrers along with # of hits', function() {
+      var referrers = log.parseReferrers(100);
+      expect(referrers[0][1]).toEqual(16);
+      expect(referrers.length).toEqual(4);
+    });
+
+    it('orders the referrers in descending order of hits', function() {
+      var referrers = log.parseReferrers(100);
+      expect(referrers).toBeInDescOrder();
+    });
+
+    it('can return only those that match a given property', function() {
+      var referrers = log.parseReferrers(100, 'date', '11/Feb/2012');
+      var expected = [
+        ['http://localhost/', 16],
+        ['http://localhost', 4],
+        ['http://example.com/', 1]
+      ];
+      expect(referrers.length).toEqual(3);
+      expect(referrers).toEqual(expected);
+    });
+  });
+
+  // Test parseRefDomains()
+  describe('parseRefDomains()', function() {
+    it('ignores URI scheme and presence of www', function() {
+      var refDomains = log.parseRefDomains(100);
+
+      for (var i = 0; i < refDomains.length; i++) {
+        expect(refDomains[i][0]).not.toContain('http://');
+        expect(refDomains[i][0]).not.toContain('www');
+      }
+    });
+
+    it('ignores the portion of the URI after the authority', function() {
+      var refDomains = log.parseRefDomains(100);
+
+      for (var i = 0; i < refDomains.length; i++) {
+        expect(refDomains[i][0]).not.toContain('localhost/');
+      }
+    });
+
+    it('returns an array of referring domains along with # of hits', function() {
+      var refDomains = log.parseRefDomains(100);
+      // example.com and localhost
+      console.log(refDomains);
+      expect(refDomains[0][1]).toEqual(21);
+      expect(refDomains.length).toEqual(2);
+    });
+
+    it('orders the domains in descending order of hits', function() {
+      var refDomains = log.parseRefDomains(100);
+      expect(refDomains).toBeInDescOrder();
+    });
+
+    it('can return only those that match a given property', function() {
+      var refDomains = log.parseRefDomains(100, 'date', '12/Feb/2012');
+      var expected = [['localhost', 1]];
+      expect(refDomains).toEqual(expected);
+    });
+  });
+
+  // Test parseErrors()
+  describe('parseErrors()', function() {
+    it('returns an errors of requests along with # of hits', function() {
+      var errors = log.parseErrors(100);
+      // /robots.txt should have 5 hits
+      expect(errors[0][1]).toEqual(5);
+      expect(errors.length).toEqual(2);
+    });
+
+    it('orders the errors in descending order of hits', function() {
+      var errors = log.parseErrors(100);
+      expect(errors).toBeInDescOrder();
+    });
+
+    it('can return only those that match a given property', function() {
+      var requests = log.parseErrors(100, 'date', '14/Feb/2012');
+      var expected = [
+        ['/robots.txt', 1],
+        ['/robots2.txt', 1]
+      ];
+      expect(requests.length).toEqual(2);
+      expect(requests).toEqual(expected);
     });
   });
 

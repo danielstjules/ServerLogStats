@@ -30,16 +30,17 @@ var Fixtures = function() {
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/preview.jpg HTTP/1.1" 200 15071 "http://localhost/" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/screenshot.jpg HTTP/1.1" 200 49674 "http://localhost/" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:47 -0500] "GET /assets/temporary.jpg HTTP/1.1" 200 1458 "http://localhost/" "Mozilla/4.0"\n' +
-    '00.000.000.00 - - [11/Feb/2012:15:10:48 -0500] "GET /assets/bottom.jpg HTTP/1.1" 200 55949 "http://localhost/" "Mozilla/4.0"\n' +
+    '00.000.000.00 - - [11/Feb/2012:15:10:48 -0500] "GET /assets/bottom.jpg HTTP/1.1" 200 55949 "http://example.com/" "Mozilla/4.0"\n' +
     '00.000.000.00 - - [11/Feb/2012:15:10:48 -0500] "GET /assets/favicon.ico HTTP/1.1" 200 1150 "-" "Mozilla/4.0"\n' +
     '00.00.00.01 - - [12/Feb/2012:15:48:19 -0500] "GET /robots.txt HTTP/1.0" 404 529\n' +
     '000.00.0.02 - - [12/Feb/2012:16:53:37 -0500] "GET /robots.txt HTTP/1.0" 404 169\n' +
     '000.00.0.02 - - [12/Feb/2012:16:53:39 -0500] "GET / HTTP/1.0" 200 3740\n' +
-    '000.000.000.03 craig - [12/Feb/2012:17:58:48 -0500] "GET /test.html?order_by=name#downloads HTTP/1.1" 200 3740 "-" "http://localhost/anotherurl"\n' +
+    '000.000.000.03 craig - [12/Feb/2012:17:58:48 -0500] "GET /test.html?order_by=name#downloads HTTP/1.1" 200 3740 "http://localhost/anotherurl" "Mozilla"\n' +
     '00.000.000.004 - - [13/Feb/2012:18:13:02 -0500] "GET /robots.txt HTTP/1.1" 404 169 "-" "Mozilla/5.0"\n' +
     '000.00.000.005 - testuser [13/Feb/2012:18:16:55 -0500] "GET /robots.txt HTTP/1.1" 404 143 "-" "Mozilla/5.0 (compatible; randombot/1.0 )"\n' +
     '000.00.000.005 - testuser [13/Feb/2012:18:16:56 -0500] "GET / HTTP/1.1" 200 1588 "-" "Mozilla/5.0 (compatible; randombot/1.0 )"\n' +
-    '00.000.000.006 - anotherperson [14/Feb/2012:19:32:45 -0500] "GET /robots.txt HTTP/1.1" 404 143 "-" "Mozilla/5.0"\n';
+    '00.000.000.006 - anotherperson [14/Feb/2012:19:32:45 -0500] "GET /robots.txt HTTP/1.1" 404 143 "-" "Mozilla/5.0"\n' +
+    '00.000.000.006 - anotherperson [14/Feb/2012:19:32:45 -0500] "GET /robots2.txt HTTP/1.1" 404 143 "-" "Mozilla/5.0"\n';
 
   // Here's how we expect the log to be parsed as
   expectedEntries = [
@@ -63,16 +64,17 @@ var Fixtures = function() {
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/preview.jpg", "status":"200", "bytes":"15071", "referrer":"http://localhost/", "userAgent":"Mozilla/4.0" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/screenshot.jpg", "status":"200", "bytes":"49674", "referrer":"http://localhost/", "userAgent":"Mozilla/4.0" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/temporary.jpg", "status":"200", "bytes":"1458", "referrer":"http://localhost/", "userAgent":"Mozilla/4.0" },
-    { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/bottom.jpg", "status":"200", "bytes":"55949", "referrer":"http://localhost/", "userAgent":"Mozilla/4.0" },
+    { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/bottom.jpg", "status":"200", "bytes":"55949", "referrer":"http://example.com/", "userAgent":"Mozilla/4.0" },
     { "host":"00.000.000.00", "date":"11/Feb/2012", "request":"/assets/favicon.ico", "status":"200", "bytes":"1150", "referrer":"-", "userAgent":"Mozilla/4.0" },
     { "host":"00.00.00.01", "date":"12/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"529", "referrer":"", "userAgent":"" },
     { "host":"000.00.0.02", "date":"12/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"169", "referrer":"", "userAgent":"" },
     { "host":"000.00.0.02", "date":"12/Feb/2012", "request":"/", "status":"200", "bytes":"3740", "referrer":"", "userAgent":"" },
-    { "host":"000.000.000.03", "date":"12/Feb/2012", "request":"/test.html?order_by=name#downloads", "status":"200", "bytes":"3740", "referrer":"-", "userAgent":"http://localhost/anotherurl" },
+    { "host":"000.000.000.03", "date":"12/Feb/2012", "request":"/test.html?order_by=name#downloads", "status":"200", "bytes":"3740", "referrer":"http://localhost/anotherurl", "userAgent":"Mozilla" },
     { "host":"00.000.000.004", "date":"13/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"169", "referrer":"-", "userAgent":"Mozilla/5.0" },
     { "host":"000.00.000.005", "date":"13/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"143", "referrer":"-", "userAgent":"Mozilla/5.0 (compatible; randombot/1.0 )" },
     { "host":"000.00.000.005", "date":"13/Feb/2012", "request":"/", "status":"200", "bytes":"1588", "referrer":"-", "userAgent":"Mozilla/5.0 (compatible; randombot/1.0 )" },
-    { "host":"00.000.000.006", "date":"14/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"143", "referrer":"-", "userAgent":"Mozilla/5.0" }
+    { "host":"00.000.000.006", "date":"14/Feb/2012", "request":"/robots.txt", "status":"404", "bytes":"143", "referrer":"-", "userAgent":"Mozilla/5.0" },
+    { "host":"00.000.000.006", "date":"14/Feb/2012", "request":"/robots2.txt", "status":"404", "bytes":"143", "referrer":"-", "userAgent":"Mozilla/5.0" }
   ];
 
  return {
