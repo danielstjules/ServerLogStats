@@ -32,6 +32,20 @@
     to browse your computer for the file. <input type="file" id="fileinput" name="fileinput" />
   </div>
 
+  <script id="uploaded-template" type="text/x-handlebars-template">
+    {{#if browserIncompatible}}
+      <strong>Error:</strong> The File APIs necessary for this app are not 
+      supported by your browser.
+    {{else}}
+     <strong>Analyzing: </strong> {{fileName}} - {{fileSize}} bytes
+    {{/if}}
+    {{#if fileError}}
+      <br /><br />
+      <strong>Error:</strong> File input not a valid log. This page will refresh 
+      automatically in 4 seconds
+    {{/if}}
+  </script>
+
   <script id="section-template" type="text/x-handlebars-template">
     <div id="{{id}}" class="section">
       <div class="container">
@@ -77,14 +91,17 @@
     </table>
   </script>
 
-  <div id="traffic">
-  </div>
+  <div id="traffic"></div>
 </div>
 
 <div id="footer">
   <p>Maximum recommended log upload size: 200MB</p>
   <p>Compatible with Google Chrome &amp; Mozilla FireFox</p>
 </div>
+
+<script id="time-template" type="text/x-handlebars-template">
+  <p>Script Execution Time: {{duration}}s</p>
+</script>
 
 <script type="text/javascript" src="lib/d3.v3.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="lib/zepto.min.js"></script>

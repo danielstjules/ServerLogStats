@@ -46,9 +46,14 @@ function handleFileSelect(evt) {
   // Log current time
   var startTime = new Date().getTime();
 
+  // Handlebars template for updating #uploadbox
+  var source = $('#uploaded-template').html();
+  var template = Handlebars.compile(source);
+  var uploadbox = $('#uploadbox');
+
   // Check that we have access to the necessary APIs
   if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
-    alert('The File APIs necessary for this app are not supported by your browser.');
+    uploadbox.html(template({ 'browserIncompatible': true }));
     return false;
   }
 
@@ -62,8 +67,8 @@ function handleFileSelect(evt) {
     file = evt.dataTransfer.files[0];
 
   // Display File Info, replacing previous upload box contents
-  $('#uploadbox').html('<strong>Analyzing: </strong>' + escape(file.name) +
-    ' - ' + file.size + ' bytes');
+  var fileInfo = { 'fileName': escape(file.name), 'fileSize': file.size };
+  uploadbox.html(template(fileInfo));
 
   // Create new FileReader, and handle when done reading
   var reader = new FileReader();
@@ -72,11 +77,11 @@ function handleFileSelect(evt) {
     if (evt.target.readyState == FileReader.DONE) {
       log = new Log(evt.target.result);
 
-      // Only read if log file looks valid, otherwise return and refresh
+      // Display error if the log file is invalid, then return and refresh
       if (!log.isValid()) {
-        $('#uploadbox').append('<br /><br />Error: File input not a valid log. ' +
-          'This page will refresh automatically in 4 seconds');
-        setTimeout('location.reload(true);',4000);
+        fileInfo['fileError'] = true;
+        uploadbox.html(template(fileInfo));
+        setTimeout('location.reload(true);', 4000);
         return;
       }
 
@@ -88,7 +93,8 @@ function handleFileSelect(evt) {
       var endTime = new Date().getTime();
       var duration = (endTime - startTime) / 1000;
 
-      $('#footer').html('<p>Script Execution Time: ' + duration + 's</p>');
+      var timeTemplate = Handlebars.compile($('#time-template').html());
+      $('#footer').html(timeTemplate({ 'duration': duration }));
     }
   };
 
@@ -121,7 +127,7 @@ function setupPage() {
   var div;
   var tableHtml;
 
-  var source = $("#section-template").html();
+  var source = $('#section-template').html();
   var template = Handlebars.compile(source);
 
   // Add the traffic line chart
@@ -199,7 +205,7 @@ function processOverlay(evt) {
   var body = $('body');
   body.css('overflow', 'hidden');
 
-  var source = $("#modal-template").html();
+  var source = $('#modal-template').html();
   var template = Handlebars.compile(source);
 
   // For hosts, display userAgent and requests
@@ -224,10 +230,10 @@ function processOverlay(evt) {
   // chart showing requests over time, and a table for requesting hosts
   else {
     var sectionInfo = {
-      'requests' : { columnName : 'request', htmlTitle : 'Request' },
-      'pages'    : { columnName : 'request', htmlTitle : 'Page' },
-      'ref'      : { columnName : 'referrer', htmlTitle : 'Referrer' },
-      'errors'   : { columnName : 'request', htmlTitle : 'Error' }
+      'requests' : { 'columnName': 'request',  'htmlTitle': 'Request' },
+      'pages'    : { 'columnName': 'request',  'htmlTitle': 'Page' },
+      'ref'      : { 'columnName': 'referrer', 'htmlTitle': 'Referrer' },
+      'errors'   : { 'columnName': 'request',  'htmlTitle': 'Error' }
     };
 
     // Generate a list of the most common hosts, with a limit of 1000
@@ -265,7 +271,7 @@ function removeOverlay(evt) {
 }
 
 // Register the table partial
-Handlebars.registerPartial("table", $("#table-partial").html());
+Handlebars.registerPartial('table', $('#table-partial').html());
 
 // Add the listeners
 var uploadBox = $('#uploadbox');
