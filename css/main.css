@@ -171,11 +171,11 @@ input {
 }
 
 #modal {
-    width: 760px;
+    width: 880px;
     background-color: #3b3c3d;
-    padding: 20px;
+    padding: 30px;
     border: 1px #484949 solid;
-    margin: 20px auto 0 auto;
+    margin: 30px auto 0 auto;
 }
 
 #modal .table {
