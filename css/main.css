@@ -1,16 +1,21 @@
 body {
-    background-color: #2e3031;
+    background-color: #272727;
     color: #ddd;
-    font-family: 'PT Sans', sans-serif;
+    font-family: Arial, sans-serif;
     font-size: 13px;
     padding: 0;
-    margin: 0 0 20px 0;
+    margin: 30px 0 30px 0;
 }
 
-a, a:link, a:visited, a:active, a:hover {
-    color: #33803a;
-    text-decoration: none;
+a,
+a:link,
+a:visited,
+a:active,
+a:hover {
     border-bottom: 1px dotted;
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
 }
 
 a:hover {
@@ -29,66 +34,44 @@ a:hover {
     clear: both;
 }
 
-#header {
-    background-color: #fff;
-    background: -moz-linear-gradient(top, #fff, #ccc);
-    background: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), to(#ccc));
-    background: -webkit-linear-gradient(top, #fff, #ccc);
-    background: -o-linear-gradient(top, #fff, #ccc);
-    background: linear-gradient(to bottom, #fff, #ccc);
-    background: -ms-linear-gradient(left, #ccc, #fff);
-    background-repeat: repeat-x;
-    -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#ccc, endColorstr=#fff)";
-    border-bottom: 3px #eee solid;
-}
-
-#headercontainer {
-    width: 800px;
-    margin: 0 auto;
-    height: 100px;
-}
-
-#headercontainer span {
-    color: #777;
-    padding: 23px 20px;
-    margin: 0;
-    display: block;
-    margin: 0 1px 0 1px;
+.header {
+    background: url('../img/header.jpg');
+    height: 60px;
+    margin: 0 auto 30px auto;
+    width: 940px;
 }
 
 h1 {
-    text-align: center;
-    float: left;
-    width: 100px;
-    margin: 0 auto;
-    font-family: 'Verdana', sans-serif;
-    font-size: 20px;
-    font-weight: normal;
-    color: #a0a0a0;
-    margin: 20px;
+    display: none;
+    visibility: hidden;
 }
 
-h1:first-line {
-    font-size: 24px;
-    font-weight: bold;
-    color: #3c9845;
+.intro {
+    background: url('../img/intro.gif');
+    height: 130px;
+    margin: 0 auto 30px auto;
+    padding: 30px 35px 0 245px;
+    width: 660px;
+    font-size: 16px;
+    line-height: 36px;
+    text-shadow: -1px 1px #444;
 }
 
 #content {
-    width: 800px;
+    width: 940px;
     margin: 0 auto;
 }
 
 #uploadbox {
     background-color: #3b3c3d;
-    padding: 20px;
+    padding: 30px;
     border: 1px #484949 solid;
-    margin: 20px 0 20px 0;
+    margin-bottom: 30px;
 }
 
 #footer {
-    padding: 0 20px 0 20px;
-    width: 760px;
+    padding: 0 30px 0 30px;
+    width: 880px;
     margin: 0 auto;
 }
 
@@ -97,19 +80,13 @@ h1:first-line {
     color: #484949;
 }
 
-#traffic,
-#hosts,
-#requests,
-#pages,
-#ref,
-#refdomains,
-#errors {
+.section {
     height: 240px;
     display: none;
     background-color: #3b3c3d;
-    padding: 20px;
+    padding: 30px;
     border: 1px #484949 solid;
-    margin: 20px 0 20px 0;
+    margin: 0 0 30px 0;
 }
 
 .container {
@@ -119,7 +96,7 @@ h1:first-line {
 .table {
     margin-top: 12px;
     height: 214px;
-    width: 360px;
+    width: 470px;
     overflow: auto;
     font-size: 11px;
     font-family: 'Verdana', sans-serif;
@@ -140,7 +117,7 @@ h1:first-line {
 }
 
 table {
-    width: 340px;
+    width: 450px;
     table-layout: fixed;
 }
 
@@ -186,7 +163,7 @@ input {
 #overlay {
     width: 100%;
     height: 100%;
-    background-color:rgba(0,0,0,0.9);
+    background-color: rgba(0,0,0,0.9);
     position: fixed;
     top: 0;
     left: 0;
@@ -228,7 +205,7 @@ input {
 
 .barChart rect {
     stroke: #2e3031;
-    fill: #43bf60;
+    fill: #ff8237;
 }
 
 .barChart text.bar, .barChart text.rule {
@@ -236,7 +213,7 @@ input {
 }
 
 .barChart rect:hover {
-    fill: #74cd89;
+    fill: #fe9759;
 }
 
 .lineChart {
@@ -256,13 +233,13 @@ input {
 
 .lineChart .line {
     fill: none;
-    stroke: #43bf60;
+    stroke: #ff8237;
     stroke-width: 1px;
 }
 
 .lineChart .rLine {
     fill: none;
-    stroke: #43bf60;
+    stroke: #ff8237;
     stroke-width: 1px;
 }
 

@@ -209,7 +209,7 @@ var Charts = function() {
    */
   function publicDrawTrafficLineChart(container, array) {
     var margin = {top: 20, right: 6, bottom: 30, left: 16};
-    var width = 760;
+    var width = 880;
     var height = 200;
 
     var data = array.map(function(d) {
@@ -300,7 +300,7 @@ var Charts = function() {
 
     // Add the legend for the two lines
     lineChart.append('svg:rect')
-      .attr('fill', '#43bf60' )
+      .attr('fill', '#ff8237' )
       .attr('x', width - 120)
       .attr('y', 0)
       .attr('width', 14)

@@ -142,7 +142,7 @@ function setupPage() {
     ['pages',       log.pages,       'Page',      'Hits'],
     ['ref',         log.referrers,   'Referrer',  'Hits'],
     ['refdomains',  log.refDomains,  'Domain',    'Hits'],
-    ['errors',      log.errors,      'Errors',    'Hits']
+    ['errors',      log.errors,      'Error',    'Hits']
   ];
 
   // Loop through each barChartInfo element

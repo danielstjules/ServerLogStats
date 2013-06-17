@@ -12,7 +12,7 @@ As of right now, only the NCSA Common Log Format and Combined Log Format are sup
 
 In addition, you can run our Jasmine test suite by going to <http://serverlogstats.com/test/SpecRunner.html>
 
-![screenshot](http://serverlogstats.com/updated_screenshot.gif)
+![screenshot](http://serverlogstats.com/screenshot.jpg)
 
 Licensing
 ---------
