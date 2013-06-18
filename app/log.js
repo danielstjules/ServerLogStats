@@ -53,6 +53,34 @@ function Log(logFile) {
     return true;
   };
 
+  // Helper functions
+
+  /**
+   * When filtering log entries, returns true if the supplied log object 
+   * (entry/row in logTable) meets the condition set by key and match.
+   * Also handles filtering by page or refDomain.
+   *
+   * @param   logObject  A row from logTable
+   * @param   key        Either the object's key to match against, or 'refDomain'
+   *                     or 'page'
+   * @param   match      The string for which to check equality
+   * @return  boolean    Whether or not the object meets the given condition
+   */
+  function meetsCondition(logObject, key, match) {
+    if (key == 'refDomain') {
+      if (getDomainFromURL(logObject['referrer']) == match)
+        return true;
+    } else if (key == 'page') {
+      if (removeQueryAndFragment(logObject['request']) == match)
+        return true;
+    } else {
+      if (logObject[key] == match)
+        return true;
+    }
+
+    return false;
+  }
+
   /**
    * Pushes the key/val pairs from a hash into an array and sorts it by its value. 
    * It then trims the results to be less than or equal to n in size.
@@ -79,6 +107,42 @@ function Log(logFile) {
       return true;
     });
   }
+
+  /**
+   * Given an URL as a string, returns the corresponding page by removing the 
+   * fragment and query, leaving the rest of the path.
+   *
+   * @param   url     An URL represented as a string   
+   * @return  string  The page corresponding to the URL
+   */
+  function removeQueryAndFragment(url) {
+    // Remove the query from the URI if present
+    query = url.indexOf('?');
+    if (query != -1)
+      url = url.substring(0, query);
+
+    // Remove the fragment from the URI if present
+    fragment = url.indexOf('?');
+    if (fragment != -1)
+      url = url.substring(0, fragment);
+
+    return url;
+  }
+
+  function getDomainFromURL(url) {
+    url = url.replace('http://', '');
+    url = url.replace('https://', '');
+    url = url.replace('www.', '');
+
+    // remove everything after the authority
+    var slash = url.indexOf('/');
+    if (slash != -1)
+      url = url.substring(0, slash);
+
+    return url.toLowerCase();
+  }
+
+  // Parsing the log
 
   /**
    * Builds the logTable array of hashes. We extract the host, date, request, 
@@ -185,7 +249,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // Filter out hits that don't match our criteria, if given
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       var date = Date.parse(this.logTable[i]['date']);
@@ -238,7 +302,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out hosts that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       // Increment host frequency
@@ -267,7 +331,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out rows that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       // Increment requests frequency
@@ -314,21 +378,11 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out rows that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       if (isNotMedia(this.logTable[i]['request'])) {
-        page = this.logTable[i]['request'];
-
-        // Remove the query from the URI if present
-        query = page.indexOf('?');
-        if (query != -1)
-          page = page.substring(0, query);
-
-        // Remove the fragment from the URI if present
-        fragment = page.indexOf('?');
-        if (fragment != -1)
-          page = page.substring(0, fragment);
+        var page = removeQueryAndFragment(this.logTable[i]['request']);
 
         if (!pages[page])
           pages[page] = 1;
@@ -359,7 +413,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out rows that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       // Increment ref frequency
@@ -382,31 +436,20 @@ function Log(logFile) {
    * and is in descending order. If column and match are provided, it'll filter 
    * rows in logTable by those values.
    *
-   * @param   n      Number of top rows to include
+   * @param   n       Number of top rows to include
    * @param   column  The column of the log table to match against
    * @param   match   The string for which to check equality
-   * @return  array  Table with columns [referrer, hits]
+   * @return  array   Table with columns [referrer, hits]
    */
   this.parseRefDomains = function(n, column, match) {
     var refDomains = {};
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out rows that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
-      var refDomain = this.logTable[i]['referrer'];
-
-      refDomain = refDomain.replace('http://',  '');
-      refDomain = refDomain.replace('https://', '');
-      refDomain = refDomain.replace('www.',     '');
-
-      // remove everything after the authority
-      var slash = refDomain.indexOf('/');
-      if (slash != -1)
-        refDomain = refDomain.substring(0, slash);
-
-      refDomain = refDomain.toLowerCase();
+      var refDomain = getDomainFromURL(this.logTable[i]['referrer']);
 
       // Increment ref domain frequency
       if (!refDomains[refDomain])
@@ -440,7 +483,7 @@ function Log(logFile) {
 
     for (var i = 0; i < this.logTable.length; i++) {
       // filter out rows that don't match our criteria
-      if (column && match && this.logTable[i][column] != match)
+      if (column && match && !meetsCondition(this.logTable[i], column, match))
           continue;
 
       // Increment error frequency

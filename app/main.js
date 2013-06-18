@@ -197,10 +197,6 @@ function processOverlay(evt) {
   // Get section id, ie: <div id="hosts" class="section">
   var section = $(this).closest('.section').attr('id');
 
-  // TODO: Figure out what information we'd like to display for a ref domain
-  if (section == 'refdomains')
-    return;
-
   // Dim the screen and disable the scrollbar
   var body = $('body');
   body.css('overflow', 'hidden');
@@ -230,14 +226,15 @@ function processOverlay(evt) {
   // chart showing requests over time, and a table for requesting hosts
   else {
     var sectionInfo = {
-      'requests' : { 'columnName': 'request',  'htmlTitle': 'Request' },
-      'pages'    : { 'columnName': 'request',  'htmlTitle': 'Page' },
-      'ref'      : { 'columnName': 'referrer', 'htmlTitle': 'Referrer' },
-      'errors'   : { 'columnName': 'request',  'htmlTitle': 'Error' }
+      'requests':   { 'key': 'request',   'htmlTitle': 'Request' },
+      'pages'   :   { 'key': 'page',      'htmlTitle': 'Page' },
+      'ref'     :   { 'key': 'referrer',  'htmlTitle': 'Referrer' },
+      'refdomains': { 'key': 'refDomain', 'htmlTitle': 'Referring Domain' },
+      'errors'   :  { 'key': 'request',   'htmlTitle': 'Error' }
     };
 
     // Generate a list of the most common hosts, with a limit of 1000
-    var column = sectionInfo[section]['columnName'];
+    var column = sectionInfo[section]['key'];
     var hosts = log.parseHosts(1000, column, query);
     var hostsTable = {
       'colOne': 'Host',
