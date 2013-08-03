@@ -3,7 +3,7 @@
  */
 
 function Log(logFile) {
-  // Table with: host, date, request, status (http status), bytes (transferred), 
+  // Table with: host, date, request, status (http status), bytes (transferred),
   // referrer and userAgent. Example access: logTable[1]['request']
   this.logTable    = [];
 
@@ -17,8 +17,8 @@ function Log(logFile) {
   this.refDomains  = [];
 
   /**
-   * Returns the User Agent of the given host. It searches for the first result 
-   * of that host in the logs, and uses that entry's User Agent - thus ignoring 
+   * Returns the User Agent of the given host. It searches for the first result
+   * of that host in the logs, and uses that entry's User Agent - thus ignoring
    * any subsequent changes.
    *
    * @param   host     The host to search the table for
@@ -32,7 +32,7 @@ function Log(logFile) {
   };
 
   /**
-   * Uses regex to determine whether or not the first line of the file is in 
+   * Uses regex to determine whether or not the first line of the file is in
    * Common or Combined Log format. If so, returns true. Otherwise false.
    *
    * @return  boolean  True if its valid, false otherwise
@@ -42,7 +42,7 @@ function Log(logFile) {
     logSegment = logSegment.split(/[\r\n|\n]+/);
 
     // Regex to match against Combined Log Format
-    var combined = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]+" \d+ \d+ "[^"]*" "[^"]*"$/;
+    var combined = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]+" \d+ \d+ "[^"]*" "[^"]*".*$/;
 
     // Regex to match against Common Log Format
     var common = /^\S+ \S+ \S+ \[[^\]]+\] "[^"]+" \d+ \d+$/;
@@ -56,7 +56,7 @@ function Log(logFile) {
   // Helper functions
 
   /**
-   * When filtering log entries, returns true if the supplied log object 
+   * When filtering log entries, returns true if the supplied log object
    * (entry/row in logTable) meets the condition set by key and match.
    * Also handles filtering by page or refDomain.
    *
@@ -82,7 +82,7 @@ function Log(logFile) {
   }
 
   /**
-   * Pushes the key/val pairs from a hash into an array and sorts it by its value. 
+   * Pushes the key/val pairs from a hash into an array and sorts it by its value.
    * It then trims the results to be less than or equal to n in size.
    *
    * @param  array  The hash to manipulate
@@ -109,10 +109,10 @@ function Log(logFile) {
   }
 
   /**
-   * Given an URL as a string, returns the corresponding page by removing the 
+   * Given an URL as a string, returns the corresponding page by removing the
    * fragment and query, leaving the rest of the path.
    *
-   * @param   url     An URL represented as a string   
+   * @param   url     An URL represented as a string
    * @return  string  The page corresponding to the URL
    */
   function removeQueryAndFragment(url) {
@@ -145,7 +145,7 @@ function Log(logFile) {
   // Parsing the log
 
   /**
-   * Builds the logTable array of hashes. We extract the host, date, request, 
+   * Builds the logTable array of hashes. We extract the host, date, request,
    * status, bytes transferred, and referrer and store in the logTable.
    * Then calls functions to parse the logTable itself.
    */
@@ -195,8 +195,8 @@ function Log(logFile) {
       startPos = endPos + 1;
       endPos = line.indexOf(' ', startPos);
 
-      // If we couldn't find a space after bytes, then assume the line is in 
-      // Common Log Format. In that case, bytes is the rest of the line, and we 
+      // If we couldn't find a space after bytes, then assume the line is in
+      // Common Log Format. In that case, bytes is the rest of the line, and we
       // can go to the next
       if (endPos === -1) {
         this.logTable[i]['bytes'] = line.substring(startPos);
@@ -234,8 +234,8 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted array of objects containing the number of hits and total 
-   * bandwidth transferred in MB per day. Also takes arguments for filtering the 
+   * Builds a sorted array of objects containing the number of hits and total
+   * bandwidth transferred in MB per day. Also takes arguments for filtering the
    * traffic based on a matching criteria.
    *
    * @param   column  The column of the log table to match against
@@ -288,8 +288,8 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted table, in which each row corresponds to a host and its number 
-   * of requests. The table is n in size and is in descending order of hits. If 
+   * Builds a sorted table, in which each row corresponds to a host and its number
+   * of requests. The table is n in size and is in descending order of hits. If
    * column and match are provided, it'll filter rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
@@ -316,9 +316,9 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted table, in which each row contains the request url and the 
+   * Builds a sorted table, in which each row contains the request url and the
    * number of occurrences. The table is n in size and is in descending order
-   * of hits. If column and match are provided, it'll filter rows in logTable by 
+   * of hits. If column and match are provided, it'll filter rows in logTable by
    * those values.
    *
    * @param   n       Number of top rows to include
@@ -345,11 +345,11 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted table, in which each row corresponds to a page and its 
-   * number of hits. Each request is checked against a list of common media 
-   * extensions to ensure that it's indeed a page. The query and fragment 
-   * portions of the URI are also ignored if present. The table is n in size and 
-   * in descending order of hits. If column and match are provided, it'll filter 
+   * Builds a sorted table, in which each row corresponds to a page and its
+   * number of hits. Each request is checked against a list of common media
+   * extensions to ensure that it's indeed a page. The query and fragment
+   * portions of the URI are also ignored if present. The table is n in size and
+   * in descending order of hits. If column and match are provided, it'll filter
    * rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
@@ -398,9 +398,9 @@ function Log(logFile) {
 
 
   /**
-   * Builds a sorted table, in which each row corresponds to an http referrer 
-   * and the number of requests originating from that location. The table is n in 
-   * size and is in descending order of hits. If column and match are provided, 
+   * Builds a sorted table, in which each row corresponds to an http referrer
+   * and the number of requests originating from that location. The table is n in
+   * size and is in descending order of hits. If column and match are provided,
    * it'll filter rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
@@ -431,9 +431,9 @@ function Log(logFile) {
   };
 
   /**
-   * Builds the referring domains table, in which each row corresponds to an 
-   * external referring domain and its number of requests. The table is N in size 
-   * and is in descending order. If column and match are provided, it'll filter 
+   * Builds the referring domains table, in which each row corresponds to an
+   * external referring domain and its number of requests. The table is N in size
+   * and is in descending order. If column and match are provided, it'll filter
    * rows in logTable by those values.
    *
    * @param   n       Number of top rows to include
@@ -468,9 +468,9 @@ function Log(logFile) {
   };
 
   /**
-   * Builds a sorted table, in which each row corresponds to a 404 and its 
-   * number of requests. The table is n in size and is in descending order of 
-   * hits. If column and match are provided, it'll filter rows in logTable by 
+   * Builds a sorted table, in which each row corresponds to a 404 and its
+   * number of requests. The table is n in size and is in descending order of
+   * hits. If column and match are provided, it'll filter rows in logTable by
    * those values.
    *
    * @param   n       Number of top rows to include
