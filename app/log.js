@@ -149,17 +149,17 @@ function Log(logFile) {
    * status, bytes transferred, and referrer and store in the logTable.
    * Then calls functions to parse the logTable itself.
    */
-  this.parse = function() {
+  this.parse = function () {
     var startPos = 0;
     var endPos   = 0;
 
     // Split log file on new line
     var logEntries = logFile.split(/[\n]+/);
 
-    this.parseLine = function(i) {
+    for (var i = 0; i < logEntries.length; i++) {
       // Ignore blank lines
-      if (!logEntries[i])
-        return;
+      if(!logEntries[i])
+        continue;
 
       // RegEx is too slow for this, so we trade simplicity for performance
       this.logTable[i] = {};
@@ -202,7 +202,7 @@ function Log(logFile) {
         this.logTable[i]['bytes'] = line.substring(startPos);
         this.logTable[i]['referrer'] = "";
         this.logTable[i]['userAgent'] = "";
-        return;
+        continue;
       } else {
         this.logTable[i]['bytes'] = line.substring(startPos, endPos);
       }
@@ -219,12 +219,6 @@ function Log(logFile) {
       startPos = line.indexOf('"', endPos + 1) + 1;
       endPos = line.indexOf('"', startPos);
       this.logTable[i]['userAgent'] = line.substring(startPos, endPos);
-    };
-
-    // Loop through, yielding to the browser and parsing each line
-    // This is slower, but allows us to parse larger files
-    for (var i = 0; i < logEntries.length; i++) {
-      setTimeout(this.parseLine(i), 0);
     }
 
     // Build individual tables; store top 100 for each
